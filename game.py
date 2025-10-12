@@ -2,6 +2,7 @@ import pygame
 
 pygame.init()
 
+# full screen 
 info = pygame.display.Info()
 WINDOWWIDHT = info.current_w
 WINDOWHEIGHT = info.current_h
