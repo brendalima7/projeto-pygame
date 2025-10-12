@@ -8,7 +8,7 @@ WINDOWWIDHT = info.current_w
 WINDOWHEIGHT = info.current_h
 
 window = pygame.display.set_mode((WINDOWWIDHT, WINDOWHEIGHT))
-pygame.display.set_caption('Game')
+pygame.display.set_caption('SWITCH BACK')
 
 game = True
 while game:
