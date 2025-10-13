@@ -19,5 +19,9 @@ class TelaJogo:
             keys = pygame.key.get_pressed()
             if event.type == pygame.KEYDOWN:
                 if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
-                    return 'SAIR'       
-        return True
+                    return 'SAIR'
+                if keys[pygame.K_a]:
+                    return 'GAMEOVER' 
+                if keys[pygame.K_v]:
+                    return 'VITORIA'       
+        return 'JOGO'

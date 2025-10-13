@@ -1,7 +1,11 @@
 import pygame
+from tela_inicio import TelaInicio
+from tela_mapa import TelaMapa
 from tela_jogo import TelaJogo
+from tela_vitoria import TelaVitoria
+from tela_gameover import TelaGameOver
 
-tela_atual = 'JOGO'
+tela_atual = 'INICIO'
 
 def condicoes_iniciais(): 
     assets = {}
@@ -23,7 +27,11 @@ class Jogo:
         self.telajogo = TelaJogo(self.window, self.assets)
         # controle de telas
         self.telas = {
-            'JOGO': TelaJogo(self.window, self.assets)
+            'INICIO': TelaInicio(self.window),
+            'MAPA': TelaMapa(self.window),
+            'JOGO': TelaJogo(self.window, self.assets),
+            'VITORIA': TelaVitoria(self.window),
+            'GAMEOVER': TelaGameOver(self.window)
         }
         self.tela_atual = tela_atual
 
@@ -31,15 +39,19 @@ class Jogo:
     def run(self):
         rodando = True 
         while rodando:
-            proximo_estado = self.telajogo.update()
+            tela_ativa = self.telas[self.tela_atual]
+            proximo_estado = tela_ativa.update()
             # verificação de saída
             if proximo_estado == 'SAIR':
                 rodando = False
 
-            self.telajogo.draw()
+            elif proximo_estado != self.tela_atual:
+                self.tela_atual = proximo_estado
+
+            tela_ativa.draw()
 
             pygame.display.update() 
-                      
+
         pygame.quit() 
             
 if __name__ == '__main__':
