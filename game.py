@@ -1,12 +1,5 @@
 import pygame
 
-# variaveis globais
-WINDOWWIDHT = 800
-WINDOWHEIGHT = 600
-
-window = pygame.display.set_mode((WINDOWWIDHT, WINDOWHEIGHT))
-pygame.display.set_caption('SWITCH BACK')
-
 def condicoes_iniciais(): 
     assets = {}
     # jogador
@@ -14,25 +7,29 @@ def condicoes_iniciais():
     return assets
 
 class Jogador (pygame.sprite.Sprite):
-    def __init__(self,assets):
+    def __init__(self, window, assets):
         pygame.sprite.Sprite.__init__(self)
+        self.window = window
         self.assets = assets
         self.image = assets['jogador']
         self.x = 500
         self.y = 200
 
     def draw(self):
-        window.blit(self.image, (self.x, self.y))
+        self.window.blit(self.image, (self.x, self.y))
 
-# elementos jogáveis e lógica de interação
+
+# elementos jogaveis e logica de interacao
 class TelaJogo:
     def __init__(self, window, assets):
         self.window = window
         self.assets = assets  
-        self.jogador = Jogador(assets)  
+        self.jogador = Jogador(self.window, self.assets)  
+
     def draw(self):
         self.window.fill((0, 0, 0))
         self.jogador.draw() 
+
     def update(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -46,10 +43,15 @@ class TelaJogo:
 class Jogo:
     def __init__(self):
         pygame.init()
-        self.window = window
+        info = pygame.display.Info()
+        self.WINDOWWIDHT = info.current_w
+        self.WINDOWHEIGHT = info.current_h
+
+        self.window = pygame.display.set_mode((self.WINDOWWIDHT, self.WINDOWHEIGHT))
+        pygame.display.set_caption('SWITCH BACK')
+
         self.assets = condicoes_iniciais()
-        self.telajogo = TelaJogo(window,self.assets)
-        self.jogador = Jogador(self.assets)
+        self.telajogo = TelaJogo(self.window, self.assets)
 
     # loop principal
     def run(self):
@@ -65,4 +67,3 @@ class Jogo:
 if __name__ == '__main__':
     game = Jogo()
     game.run()
-
