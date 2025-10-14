@@ -4,29 +4,27 @@ from tela_mapa import TelaMapa
 from tela_jogo import TelaJogo
 from tela_vitoria import TelaVitoria
 from tela_gameover import TelaGameOver
+import constantes 
 
-tela_atual = 'INICIO'
+tela_atual = 'INICIO' 
 
 def condicoes_iniciais(): 
     assets = {}
-    # jogador
     assets['jogador'] = pygame.image.load('assets/player.png').convert_alpha()
     return assets
 
 class Jogo:
     def __init__(self):
-        pygame.init()
-        info = pygame.display.Info()
-        self.WINDOWWIDHT = info.current_w
-        self.WINDOWHEIGHT = info.current_h
-
-        self.window = pygame.display.set_mode((self.WINDOWWIDHT, self.WINDOWHEIGHT))
+        pygame.init() 
+        
+        self.WINDOWWIDHT = constantes.WINDOWWIDHT
+        self.WINDOWHEIGHT = constantes.WINDOWHEIGHT
+        self.window = pygame.display.set_mode((self.WINDOWWIDHT, self.WINDOWHEIGHT), pygame.FULLSCREEN)
         pygame.display.set_caption('SWITCH BACK')
-
+        
         self.assets = condicoes_iniciais()
-        self.telajogo = TelaJogo(self.window, self.assets)
+        self.clock = pygame.time.Clock() # cria o relogio para controle de FPS
 
-        # controle de telas
         self.telas = {
             'INICIO': TelaInicio(self.window),
             'MAPA': TelaMapa(self.window, self.assets),
@@ -40,19 +38,26 @@ class Jogo:
     def run(self):
         rodando = True 
         while rodando:
+            # controle de FPS
+            self.clock.tick(60) 
+            
             tela_ativa = self.telas[self.tela_atual]
+            
+            # atualizacao da tela ativa
             proximo_estado = tela_ativa.update()
 
-            # verificação de saída
+            # verifica transicao de tela
             if proximo_estado == 'SAIR':
                 rodando = False
 
             elif proximo_estado != self.tela_atual:
                 self.tela_atual = proximo_estado
 
+            # desenha
             tela_ativa.draw()
             
-            pygame.display.update() 
+            # atualizacao 
+            pygame.display.flip()
 
         pygame.quit() 
             

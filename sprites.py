@@ -1,46 +1,59 @@
+# ARQUIVO: sprites.py
+
 import pygame
 import constantes
 
 class Jogador (pygame.sprite.Sprite):
-    def __init__(self, window, assets, velocidade):
-
-        pygame.sprite.Sprite.__init__(self)
+    def __init__(self, window, assets, posicao, grupo):
+        super().__init__(grupo)
         self.window = window
         self.assets = assets
         self.image = assets['jogador']
-        # retangulo do jogador
-        self.rect = self.image.get_rect()
+        # retangulo do jogador, posicionado no 'posicao' (centro)
+        self.rect = self.image.get_rect(center = posicao)
 
-        # posicao inicial do retangulo ( no centro da tela )
-        self.rect.center = (constantes.WINDOWWIDHT/2, constantes.WINDOWHEIGHT/2)
-
-        # velocidade do jogador 
-        self.velocidade = velocidade
-        self.x = 0
-        self.y = 0
+        self.direcao = pygame.math.Vector2()
+        self.velocidade = 5
 
     def get_input(self):
         keys = pygame.key.get_pressed()
 
-        # garante que ao soltar a tecla o jogador para
-        self.x = 0
-        self.y = 0
+        # REINICIA A DIREÇÃO EM CADA FRAME
+        # ESSENCIAL: Garante que o jogador pare de se mover se nenhuma tecla estiver pressionada
+        self.direcao.x = 0
+        self.direcao.y = 0
 
+        # MOVIMENTO HORIZONTAL
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.x = -self.velocidade
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.x = self.velocidade
+            self.direcao.x = -1
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.direcao.x = 1
+
+        # MOVIMENTO VERTICAL
         if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.y = -self.velocidade
-        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.y = self.velocidade
+            self.direcao.y = -1
+        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            self.direcao.y = 1
 
     def update(self):
         self.get_input()
-        # movimento 
-        self.rect.x += self.x
-        self.rect.y += self.y
 
+        # MOVIMENTO
+        # Normaliza a direção: impede que o movimento diagonal seja mais rápido
+        if self.direcao.length() != 0:
+            self.direcao = self.direcao.normalize()
+        
+        # Aplica o movimento ao retângulo (posição)
+        self.rect.centerx += self.direcao.x * self.velocidade
+        self.rect.centery += self.direcao.y * self.velocidade
+
+        # LIMITAÇÃO DE MUNDO: Impede o jogador de sair das bordas do mapa
+        # Usa MAP_W e MAP_H das constantes
+        self.rect.left = max(0, self.rect.left)
+        self.rect.right = min(constantes.MAP_W, self.rect.right)
+        self.rect.top = max(0, self.rect.top)
+        self.rect.bottom = min(constantes.MAP_H, self.rect.bottom)
+
+    # O método draw é redundante, pois a CameraGroup o substitui (mas mantemos ele vazio)
     def draw(self):
-        # desenha a imagem do jogador dentro do retangulo
-        self.window.blit(self.image, self.rect) 
+        pass
