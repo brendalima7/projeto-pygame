@@ -10,7 +10,7 @@ tela_atual = 'INICIO'
 def condicoes_iniciais(): 
     assets = {}
     # jogador
-    assets['jogador'] = pygame.transform.scale(pygame.image.load('assets/ball.png'), (50,50))
+    assets['jogador'] = pygame.image.load('assets/player.png').convert_alpha()
     return assets
 
 class Jogo:
@@ -25,10 +25,11 @@ class Jogo:
 
         self.assets = condicoes_iniciais()
         self.telajogo = TelaJogo(self.window, self.assets)
+
         # controle de telas
         self.telas = {
             'INICIO': TelaInicio(self.window),
-            'MAPA': TelaMapa(self.window),
+            'MAPA': TelaMapa(self.window, self.assets),
             'JOGO': TelaJogo(self.window, self.assets),
             'VITORIA': TelaVitoria(self.window),
             'GAMEOVER': TelaGameOver(self.window)
@@ -41,6 +42,7 @@ class Jogo:
         while rodando:
             tela_ativa = self.telas[self.tela_atual]
             proximo_estado = tela_ativa.update()
+
             # verificação de saída
             if proximo_estado == 'SAIR':
                 rodando = False
@@ -49,7 +51,7 @@ class Jogo:
                 self.tela_atual = proximo_estado
 
             tela_ativa.draw()
-
+            
             pygame.display.update() 
 
         pygame.quit() 
