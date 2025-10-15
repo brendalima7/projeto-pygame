@@ -1,5 +1,5 @@
 import pygame
-from sprites import Jogador
+from sprites import Jogador # Importando a classe Jogador corrigida
 from cameras import CameraGroup
 import constantes
 
@@ -7,45 +7,59 @@ class TelaJogo:
     def __init__(self, window, assets):
         self.window = window
         self.assets = assets
-        self.jogador = Jogador(self.window, self.assets)  
+        
+        # dimensoes do mapa
+        MAP_W_FASE = 5000
+        MAP_H_FASE = 2500
+        
+        self.camera_group = CameraGroup(MAP_W_FASE, MAP_H_FASE)
+
+        self.jogador = Jogador(self.window, self.assets)
+        self.camera_group.add(self.jogador) 
 
         self.fundo_normal = self.assets['fundo_mundonormal']
-        self.fundo_largura = self.fundo_normal.get_width() # Largura da imagem do fundo
-        self.fundo_x = 0 # Posição X inicial do fundo
+        self.fundo_largura = self.fundo_normal.get_width() 
+        self.fundo_x = 0 
 
         self.mapa_do_jogo = self.assets['mapa_do_jogo']
 
+
     def draw(self):
+        self.camera_group.center_alvo_camera(self.jogador)
+        
         self.window.fill(constantes.PRETO)
 
-        # 1. Define a velocidade de rolagem (pode ajustar esse valor para mais rápido/lento)
-        velocidade_rolagem = 0 
+        # aplicacao do offset da camera para efeito de paralax
+        parallax_speed = 1
+        camera_offset_x = self.camera_group.offset.x * parallax_speed
         
-        # Atualiza a posição X do fundo
-        self.fundo_x += velocidade_rolagem
+        # desenha o primeiro background
+        self.window.blit(self.fundo_normal, (self.fundo_x - camera_offset_x, 0))
+        
+        # desenha o segundo background
+        self.window.blit(self.fundo_normal, (self.fundo_x + self.fundo_largura - camera_offset_x, 0))
 
-        # Reseta a posição X para criar o efeito de loop contínuo
-        # Quando a primeira imagem sair da tela, reposiciona para 0.
+        # rolagem do background
+        velocidade_rolagem = -2
+        self.fundo_x += velocidade_rolagem
         if self.fundo_x < -self.fundo_largura:
             self.fundo_x = 0
-
-        # Desenha a primeira imagem do fundo
-        self.window.blit(self.fundo_normal, (self.fundo_x, 0))
+            
+        # mapa principal com offset 
+        mapa_pos_ajustada = self.camera_group.get_offset_pos(0, 0)
+        self.window.blit(self.mapa_do_jogo, mapa_pos_ajustada)
         
-        # Desenha a segunda imagem do fundo, logo ao lado da primeira,
-        # para garantir a continuidade quando a primeira rolar para fora da tela.
-        self.window.blit(self.fundo_normal, (self.fundo_x + self.fundo_largura, 0))
-
-        self.window.blit(self.mapa_do_jogo, (0,0))
-        self.jogador.draw() 
-       
+        # desenho de todos os sprites
+        self.camera_group.custom_draw(self.jogador) 
+        
 
     def update(self):
-        # tratamento de eventos - apenas transicoes de tela
+        self.jogador.update()
+        
+        # transicoes de tela
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return 'SAIR'
-            
             if event.type == pygame.KEYDOWN:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:

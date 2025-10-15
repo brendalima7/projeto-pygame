@@ -12,9 +12,9 @@ def condicoes_iniciais():
     assets = {} 
     assets['jogador_mapa'] = pygame.image.load('assets/player.png').convert_alpha()
     assets['map_surface'] = pygame.image.load('assets/ground.png').convert_alpha()
-    assets['fundo_mundonormal'] = pygame.image.load('assets/fundo_mundonormal.png')
+    assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (5000,2500))
     assets['fundo_mundoinvertido'] = pygame.image.load('assets/fundo_mundoinvertido.png')
-    assets['mapa_do_jogo'] = pygame.transform.scale(pygame.image.load('assets/new.png'),(2000,1300))
+    assets['mapa_do_jogo'] = pygame.transform.scale(pygame.image.load('assets/new.png'),(5000,2500))
     return assets
 
 class Jogo:
