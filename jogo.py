@@ -9,8 +9,12 @@ import constantes
 tela_atual = 'INICIO' 
 
 def condicoes_iniciais(): 
-    assets = {}
-    assets['jogador'] = pygame.image.load('assets/player.png').convert_alpha()
+    assets = {} 
+    assets['jogador_mapa'] = pygame.image.load('assets/player.png').convert_alpha()
+    assets['map_surface'] = pygame.image.load('assets/ground.png').convert_alpha()
+    assets['fundo_mundonormal'] = pygame.image.load('assets/fundo_mundonormal.png')
+    assets['fundo_mundoinvertido'] = pygame.image.load('assets/fundo_mundoinvertido.png')
+    assets['mapa_do_jogo'] = pygame.transform.scale(pygame.image.load('assets/new.png'),(2000,1300))
     return assets
 
 class Jogo:

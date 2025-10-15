@@ -3,12 +3,12 @@
 import pygame
 import constantes
 
-class Jogador (pygame.sprite.Sprite):
+class JogadorMapa (pygame.sprite.Sprite):
     def __init__(self, window, assets, posicao, grupo):
         super().__init__(grupo)
         self.window = window
         self.assets = assets
-        self.image = assets['jogador']
+        self.image = assets['jogador_mapa']
         # retangulo do jogador, posicionado no 'posicao' (centro)
         self.rect = self.image.get_rect(center = posicao)
 
@@ -57,3 +57,17 @@ class Jogador (pygame.sprite.Sprite):
     # O método draw é redundante, pois a CameraGroup o substitui (mas mantemos ele vazio)
     def draw(self):
         pass
+
+class Jogador(pygame.sprite.Sprite):
+    def __init__(self,window,assets):
+        self.window = window
+        self.assets = assets
+        self.image = assets['jogador_mapa']
+        self.x = 500
+        self.y = 800
+
+
+    # def update(self):
+
+    def draw(self):
+        self.window.blit(self.image, (self.x, self.y))
