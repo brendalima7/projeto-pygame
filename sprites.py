@@ -62,8 +62,8 @@ class Jogador(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         
         # posicao inicial do jogador no mundo
-        self.rect.x = 500 
-        self.rect.y = 800
+        self.rect.x = 1500 
+        self.rect.y = 2000
         
         self.direcao = pygame.math.Vector2()
         self.velocidade = 5 
