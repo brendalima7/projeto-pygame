@@ -25,9 +25,10 @@ class TelaMapa:
         # desenha tudo (fundo + sprites) usando o custom_draw da camera
         self.camera_grupo.custom_draw(self.jogador, self.map_surface)
 
-    def update(self):
-        # atualiza os Sprites (chama Jogador.update() para movimentar)
-        self.camera_grupo.update() 
+    def update(self,dt):
+        # atualiza os sprites - chama Jogador.update() para movimentar
+        # self.grupo_sprites.update()
+        self.camera_grupo.update(dt) 
 
         # tratamento de eventos para transicao de telas
         for event in pygame.event.get():

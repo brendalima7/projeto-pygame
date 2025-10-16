@@ -1,5 +1,5 @@
 import pygame
-from sprites import Jogador # Importando a classe Jogador corrigida
+from sprites import Jogador 
 from cameras import CameraGroup
 import constantes
 
@@ -113,7 +113,7 @@ class TelaJogo:
         self.camera_group.custom_draw(self.jogador) 
         
 
-    def update(self):
+    def update(self,dt):
         self.jogador.update()
         self.checar_colisao()
         

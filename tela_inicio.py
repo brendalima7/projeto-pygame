@@ -7,7 +7,7 @@ class TelaInicio:
     def draw(self):
         self.window.fill((0, 100, 100))
 
-    def update(self):
+    def update(self, dt):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return 'SAIR'
