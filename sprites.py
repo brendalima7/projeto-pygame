@@ -22,7 +22,7 @@ class JogadorMapa (pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center = posicao)
 
         self.direcao = pygame.math.Vector2()
-        self.velocidade = 5
+        self.velocidade = 10
 
     def get_input(self):
         keys = pygame.key.get_pressed()
@@ -108,7 +108,6 @@ class Jogador(pygame.sprite.Sprite):
         self.velocidade = 5 
         
     def get_input(self):
-        """Lida com a entrada de teclado para movimentação."""
         keys = pygame.key.get_pressed()
 
         self.direcao.x = 0

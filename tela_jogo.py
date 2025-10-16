@@ -25,11 +25,16 @@ class TelaJogo:
         self.jogador = Jogador(self.window, self.assets)
         self.camera_group.add(self.jogador) 
 
+        self.mascara_jogador_cache = None
+        self.ultima_imagem_jogador = None
+
         self.fundo_normal = self.assets['fundo_mundonormal']
         self.fundo_largura = self.fundo_normal.get_width() 
         self.fundo_x = 0 
 
         self.mapa_do_jogo = self.assets['mapa_do_jogo']
+        self.mapa_jogo_decoracao = self.assets['mapa_jogo_decoracao']
+        self.mapa_jogo_escada = self.assets['mapa_jogo_escada']
 
         # tamanho dos blocos (tiles)
         self.tile_size = 500
@@ -47,7 +52,13 @@ class TelaJogo:
                 ).copy()
 
                 # cria uma máscara temporária
-                mask_temp = pygame.mask.from_surface(tile_surface)
+                if not hasattr(self, 'mask_cache'):
+                    self.mask_cache = {}
+
+                key = (x, y)
+                if key not in self.mask_cache:
+                    self.mask_cache[key] = pygame.mask.from_surface(tile_surface)
+                mask_temp = self.mask_cache[key]
 
                 # verifica se o tile tem pelo menos 1 pixel opaco
                 if mask_temp.count() > 0:
@@ -56,7 +67,12 @@ class TelaJogo:
         return tiles
     
     def checar_colisao(self):
-        jogador_mask = pygame.mask.from_surface(self.jogador.image)
+        # atualiza a máscara do jogador só se ele mudou de frame
+        if self.jogador.image != self.ultima_imagem_jogador:
+            self.mascara_jogador_cache = pygame.mask.from_surface(self.jogador.image)
+            self.ultima_imagem_jogador = self.jogador.image
+
+        jogador_mask = self.mascara_jogador_cache
         jogador_offset = self.jogador.rect.topleft
 
         colisao_detectada = False
@@ -108,10 +124,12 @@ class TelaJogo:
         # mapa principal com offset 
         mapa_pos_ajustada = self.camera_group.get_offset_pos(0, 0)
         self.window.blit(self.mapa_do_jogo, mapa_pos_ajustada)
+
+        self.window.blit(self.mapa_jogo_decoracao, mapa_pos_ajustada)
+        self.window.blit(self.mapa_jogo_escada, mapa_pos_ajustada)
         
         # desenho de todos os sprites
-        self.camera_group.custom_draw(self.jogador) 
-        
+        self.camera_group.custom_draw(self.jogador)        
 
     def update(self,dt):
         self.jogador.update()
