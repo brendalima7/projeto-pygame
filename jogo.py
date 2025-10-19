@@ -1,11 +1,11 @@
-import pygame
 from tela_inicio import TelaInicio
 from tela_mapa import TelaMapa
 from tela_jogo import TelaJogo
 from tela_vitoria import TelaVitoria
 from tela_gameover import TelaGameOver
-import constantes 
+from constantes import *
 import os
+
 tela_atual = 'INICIO' 
 
 # carrega os frames de animacao
@@ -17,7 +17,7 @@ def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
         for i in range(num_frames):
             filename = f"{i}.png" 
             full_path = os.path.join(path, filename)
-            image = pygame.transform.scale(pygame.image.load(full_path).convert_alpha() , (100,100))
+            image = pygame.transform.scale(pygame.image.load(full_path).convert_alpha(), (100,100))
             frames.append(image)
         animacoes[direction] = frames
     return animacoes
@@ -32,11 +32,11 @@ def condicoes_iniciais():
     assets['mapa_jogo_decoracao'] = pygame.transform.scale(pygame.image.load('assets/mapa_jogo_decoracao.png'),(5000,2500))
     assets['mapa_jogo_escada'] = pygame.transform.scale(pygame.image.load('assets/mapa_jogo_escada.png'),(5000,2500))
 
-    # atribui as imagens de animacao 
+    # imagens de animacao 
     assets['animacoes_jogador'] = carrega_frames_animacao(
-        arquivo_base = 'assets\jogador_mapa',
+        arquivo_base='assets/jogador_mapa',
         direcoes=['down', 'up', 'left', 'right'],
-        num_frames = 4
+        num_frames=4
     )
     return assets
 
@@ -44,14 +44,13 @@ class Jogo:
     def __init__(self):
         pygame.init() 
         
-        self.WINDOWWIDHT = constantes.WINDOWWIDHT
-        self.WINDOWHEIGHT = constantes.WINDOWHEIGHT
-        self.window = pygame.display.set_mode((self.WINDOWWIDHT, self.WINDOWHEIGHT), pygame.FULLSCREEN)
+        self.window = pygame.display.set_mode((WINDOWWIDHT, WINDOWHEIGHT))
         pygame.display.set_caption('SWITCH BACK')
         
-        self.assets = condicoes_iniciais()
-        self.clock = pygame.time.Clock() # cria o relogio para controle de FPS
+        self.clock = pygame.time.Clock()
+        self.rodando = True 
 
+        self.assets = condicoes_iniciais()
         self.telas = {
             'INICIO': TelaInicio(self.window),
             'MAPA': TelaMapa(self.window, self.assets),
@@ -59,33 +58,43 @@ class Jogo:
             'VITORIA': TelaVitoria(self.window),
             'GAMEOVER': TelaGameOver(self.window)
         }
-        self.tela_atual = tela_atual
 
+        # define a tela inicial
+        self.tela_atual = tela_atual
+        
     # loop principal
     def run(self):
-        rodando = True 
-        while rodando:
-            # controle de FPS
-            dt = self.clock.tick(60)/1000.0
-            
+        while self.rodando:
+            dt = self.clock.tick(60) / 1000.0
+
+            # processa eventos
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.rodando = False
+                
+                # passa eventos para a tela atual (se ela tiver handle_event)
+                tela_ativa = self.telas[self.tela_atual]
+                if hasattr(tela_ativa, 'handle_event'):
+                    resultado = tela_ativa.handle_event(event)
+                    if resultado == 'SAIR':
+                        self.rodando = False
+                    elif resultado and resultado in self.telas:
+                        self.tela_atual = resultado
+
+            # atualiza a tela atual
             tela_ativa = self.telas[self.tela_atual]
-            
-            # atualizacao da tela ativa
             proximo_estado = tela_ativa.update(dt)
 
-            # verifica transicao de tela
-            if proximo_estado == 'SAIR':
-                rodando = False
-
-            elif proximo_estado != self.tela_atual:
+            # troca de tela se necessário
+            if proximo_estado and proximo_estado != self.tela_atual:
                 self.tela_atual = proximo_estado
 
-            # desenha
-            tela_ativa.draw()
+            # desenha a tela atual
+            if hasattr(tela_ativa, 'draw'):
+                tela_ativa.draw()
             
-            # atualizacao 
-            pygame.display.flip()
-
+            pygame.display.update()
+ 
         pygame.quit() 
             
 if __name__ == '__main__':

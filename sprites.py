@@ -1,5 +1,4 @@
-import pygame
-import constantes
+from constantes import *
 
 class JogadorMapa (pygame.sprite.Sprite):
     def __init__(self, window, assets, posicao, grupo):
@@ -22,7 +21,7 @@ class JogadorMapa (pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center = posicao)
 
         self.direcao = pygame.math.Vector2()
-        self.velocidade = 10
+        self.velocidade = 5
 
     def get_input(self):
         keys = pygame.key.get_pressed()
@@ -84,63 +83,61 @@ class JogadorMapa (pygame.sprite.Sprite):
         
         # impede o jogador de sair das bordas do mapa
         self.rect.left = max(0, self.rect.left)
-        self.rect.right = min(constantes.MAP_W, self.rect.right)
+        self.rect.right = min(MAP_W, self.rect.right)
         self.rect.top = max(0, self.rect.top)
-        self.rect.bottom = min(constantes.MAP_H, self.rect.bottom)
+        self.rect.bottom = min(MAP_H, self.rect.bottom)
 
-class Jogador(pygame.sprite.Sprite):
-    def __init__(self, window, assets):
-        super().__init__()
-        
+class Sprite(pygame.sprite.Sprite):
+    def __init__(self, pos, surf, groups):
+        super().__init__(groups)
+        self.image = pygame.transform.scale_by(surf, SCALE_FACTOR)
+        self.rect = self.image.get_rect(topleft = pos)
+
+class Jogador(Sprite):
+    def __init__(self, window, assets, pos, groups, collision_sprites):
+        surf = pygame.Surface((10,10))
+        super().__init__(pos, surf, groups)
+
         self.window = window
         self.assets = assets
-        
-        self.image = assets['jogador_mapa'] 
-        
-        # define o atributo self.rect a partir da imagem
-        self.rect = self.image.get_rect()
-        
-        # posicao inicial do jogador no mundo
-        self.rect.x = 1500 
-        self.rect.y = 2000
-        
-        self.direcao = pygame.math.Vector2()
-        self.velocidade = 5 
-        
-    def get_input(self):
+
+        # movimento & colisao
+        self.direcao = pygame.Vector2()
+        self.collision_sprites = collision_sprites
+        self.velocidade = 400
+        self.gravidade = 50
+        self.no_chao = False
+    
+    def input(self):
         keys = pygame.key.get_pressed()
+        self.direcao.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
+        if keys[pygame.K_SPACE] and self.no_chao:
+            self.direcao.y = -20
 
-        self.direcao.x = 0
-        self.direcao.y = 0
-        
-        # movimento em x
-        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            self.direcao.x = -1
-        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            self.direcao.x = 1
+    def move(self, dt):
+        # horizontal
+        self.rect.x += self.direcao.x * self.velocidade * dt
+        self.collision('horizontal')
 
-        # movimento em y
-        if keys[pygame.K_UP] or keys[pygame.K_w]:
-            self.direcao.y = -1
-        elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
-            self.direcao.y = 1
+        # vertical
+        self.no_chao = False
+        self.direcao.y += self.gravidade * dt
+        self.rect.y += self.direcao.y
+        self.collision('vertical')
+    
+    def collision(self, direcao):
+        for sprite in self.collision_sprites:
+            if sprite.rect.colliderect(self.rect):
+                if direcao == 'horizontal':
+                    if self.direcao.x > 0: self.rect.right = sprite.rect.left
+                    if self.direcao.x < 0: self.rect.left = sprite.rect.right
+                if direcao == 'vertical':
+                    if self.direcao.y > 0: 
+                        self.rect.bottom = sprite.rect.top
+                        self.direcao.y = 0
+                        self.no_chao = True
+                    if self.direcao.y < 0: self.rect.top = sprite.rect.bottom
 
-    def update(self):
-        # atualiza posicao do jogador e aplica limites
-        self.get_input()
-
-        # movimento
-        if self.direcao.length() != 0:
-            self.direcao = self.direcao.normalize()
-        
-        self.rect.x += self.direcao.x * self.velocidade
-        self.rect.y += self.direcao.y * self.velocidade
-
-        # limites do mapa
-        MAP_W_FASE = 5000 
-        MAP_H_FASE = 2500
-
-        self.rect.left = max(0, self.rect.left)
-        self.rect.right = min(MAP_W_FASE, self.rect.right)
-        self.rect.top = max(0, self.rect.top)
-        self.rect.bottom = min(MAP_H_FASE, self.rect.bottom)
+    def update(self, dt):
+        self.input()
+        self.move(dt)

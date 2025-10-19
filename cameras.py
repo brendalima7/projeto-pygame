@@ -12,7 +12,7 @@ class CameraGroup(pygame.sprite.Group):
         self.offset = pygame.math.Vector2()
         
         self.metade_w = self.display_surface.get_size()[0] // 2
-        self.metade_y = self.display_surface.get_size()[1] // 2
+        self.metade_h = self.display_surface.get_size()[1] // 2
         
         # smooth factor -  controle de velocidade do seguimento.
         self.smooth_factor = 0.05 
@@ -20,7 +20,7 @@ class CameraGroup(pygame.sprite.Group):
     def center_alvo_camera(self, alvo):
         # posicoes desejadas - para onde o centro da tela deveria ir 
         desejado_x = alvo.rect.centerx - self.metade_w
-        desejado_y = alvo.rect.centery - self.metade_y
+        desejado_y = alvo.rect.centery - self.metade_h
         
         # smooth follow 
         self.offset.x += (desejado_x - self.offset.x) * self.smooth_factor

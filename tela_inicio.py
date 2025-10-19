@@ -1,20 +1,21 @@
 import pygame 
 
 class TelaInicio:
-    def __init__(self,window):
+    def __init__(self, window):
         self.window = window
         
-    def draw(self):
-        self.window.fill((0, 100, 100))
-
-    def update(self, dt):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                 return 'SAIR'
-            keys = pygame.key.get_pressed()
-            if event.type == pygame.KEYDOWN:
-                if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
-                    return 'SAIR'
-            if keys[pygame.K_m]:
-                    return 'MAPA'   
+            if event.key == pygame.K_m:
+                return 'MAPA'
+            # if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+            #     return 'JOGO'  # pode ir direto pro jogo também
+        return None
+        
+    def update(self, dt):
         return 'INICIO'
+    
+    def draw(self):
+        self.window.fill((0,100,100))

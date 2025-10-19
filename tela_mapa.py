@@ -25,23 +25,17 @@ class TelaMapa:
         # desenha tudo (fundo + sprites) usando o custom_draw da camera
         self.camera_grupo.custom_draw(self.jogador, self.map_surface)
 
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
+                return 'SAIR'
+            if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+                return 'JOGO'  # pode ir direto pro jogo também
+        return None
+
     def update(self,dt):
         # atualiza os sprites - chama Jogador.update() para movimentar
         # self.grupo_sprites.update()
         self.camera_grupo.update(dt) 
-
-        # tratamento de eventos para transicao de telas
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return 'SAIR'
-            
-            if event.type == pygame.KEYDOWN:
-                keys = pygame.key.get_pressed()
-                if keys[pygame.K_ESCAPE] or keys[pygame.K_q]:
-                    return 'SAIR'
-                
-                # exemplo de transicao para o JOGO
-                if keys[pygame.K_j]:
-                    return 'JOGO' 
                     
         return 'MAPA'
