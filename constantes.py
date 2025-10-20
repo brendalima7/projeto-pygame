@@ -24,3 +24,11 @@ VERMELHO = (255, 0, 0)
 VERDE_MAPA = (34, 139, 34)
 COR_FUNDO = '#FFFFFF'
 PARALLAX_FACTOR = 0.3
+
+gravidade_normal = 50       
+gravidade_invertida = -50 
+velocidade_y = -20  
+velocidade_y_invertido = 20
+
+# (15 segundos em milissegundos)
+tempo_mudanca_gravidade = 12000 

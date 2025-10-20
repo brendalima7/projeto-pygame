@@ -95,7 +95,7 @@ class Sprite(pygame.sprite.Sprite):
 
 class Jogador(Sprite):
     def __init__(self, window, assets, pos, groups, collision_sprites, mundo_w, mundo_h, grupo_escadas):
-        surf = pygame.Surface((10,10))
+        surf = pygame.Surface((10,10)) # O surf inicial não importa muito, pois a imagem é substituída
         super().__init__(pos, surf, groups)
 
         self.window = window
@@ -123,25 +123,37 @@ class Jogador(Sprite):
         self.direcao = pygame.Vector2()
         self.collision_sprites = collision_sprites
         self.velocidade = 400
-        self.gravidade = 50
-        self.no_chao = False
+        
+        # NOVO: Gravidade e velocidade de pulo são atributos do jogador
+        self.gravidade_valor = gravidade_normal # Começa com gravidade normal
+        self.velocidade_y = velocidade_y # Começa com pulo normal
+        
+        self.no_chao = False # Indica se o jogador está em uma superfície
 
         # escada
         self.grupo_escadas = grupo_escadas
-        self.subindo_escada = False     
-        self.alvo_escada_x = None        
-        self.velocidade_subida = 120   
+        self.subindo_escada = False
+        self.alvo_escada_x = None
+        self.velocidade_subida = 120
+
+    # NOVO MÉTODO: Para TelaJogo alterar a gravidade
+    def set_gravidade(self, nova_gravidade, nova_velocidade_y):
+        self.gravidade_valor = nova_gravidade
+        self.velocidade_y = nova_velocidade_y
+        # Opcional: Reseta a velocidade vertical e no_chao para evitar comportamentos estranhos na transição
+        self.direcao.y = 0
+        self.no_chao = False
 
     def reset_state(self):
         self.direcao.x = 0
-        self.direcao.y = 0 # Zera a velocidade vertical para evitar queda imediata
+        self.direcao.y = 0 
         self.subindo_escada = False
         self.alvo_escada_x = None
         self.movendo = False
         self.frame_index = 0
         self.animacao_timer = 0.0
-        # O estado 'no_chao' será redefinido pelo próximo ciclo de colisão
-        pass
+        self.no_chao = False # Garante que ao resetar, não está no chão
+        # A gravidade será redefinida pela TelaJogo no método alternar_gravidade
     
     def input(self):
         keys = pygame.key.get_pressed()
@@ -152,19 +164,18 @@ class Jogador(Sprite):
         self.descer_tecla = False
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            if not self.subindo_escada:
-                if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                    self.direcao.x = -1
-                    self.direcao_atual = 'left'
-                    self.movendo = True
+            # Condição da escada desnecessária aqui, já que o movimento horizontal é travado no move()
+            self.direcao.x = -1
+            self.direcao_atual = 'left'
+            self.movendo = True
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            if not self.subindo_escada:
-                self.direcao.x = 1
-                self.direcao_atual = 'right'
-                self.movendo = True
+            self.direcao.x = 1
+            self.direcao_atual = 'right'
+            self.movendo = True
         
+        # NOVO: Usa self.velocidade_y, que é dinâmica
         if keys[pygame.K_SPACE] and self.no_chao and not self.subindo_escada:
-            self.direcao.y = -20
+            self.direcao.y = self.velocidade_y
         
         if keys[pygame.K_UP]:
             self.subir_tecla = True
@@ -174,15 +185,13 @@ class Jogador(Sprite):
     def verificar_tocando_escada(self):
         if not self.grupo_escadas:
             return None
-        zona = self.rect.inflate(-10, -2)  # ajuste esses valores conforme necessário
+        zona = self.rect.inflate(-10, -2)
         for esc in self.grupo_escadas:
             if zona.colliderect(esc.rect):
                 return esc
         return None
 
     def move(self, dt):
-        keys = pygame.key.get_pressed()
-
         # horizontal
         if not self.subindo_escada:
             self.rect.x += self.direcao.x * self.velocidade * dt
@@ -191,12 +200,11 @@ class Jogador(Sprite):
             if self.alvo_escada_x is not None:
                 atual_x = float(self.rect.x)
                 alvo_x = float(self.alvo_escada_x)
-                novo_x = atual_x + (alvo_x - atual_x) * 0.25  
-
+                novo_x = atual_x + (alvo_x - atual_x) * 0.25
                 self.rect.x = int(round(novo_x))
 
         # vertical
-        self.no_chao = False
+        self.no_chao = False # Reseta o estado no_chao em cada frame
         tocando_escada = self.verificar_tocando_escada()
 
         if tocando_escada and (self.subir_tecla or self.descer_tecla):
@@ -212,17 +220,18 @@ class Jogador(Sprite):
 
         # movimento vertical dependendo do estado
         if self.subindo_escada:
-            # cancela a gravidade enquanto sobe/desce
-            self.direcao.y = 0
-
+            self.direcao.y = 0 # cancela a gravidade enquanto sobe/desce
             if self.subir_tecla:
                 self.rect.y -= int(self.velocidade_subida * dt)
                 self.movendo = True
-
-                # verificacao de colisao com o teto ao subir:
+                # verificação de colisão com o teto ao subir:
                 for sprite in self.collision_sprites:
                     if sprite.rect.colliderect(self.rect):
-                        self.rect.top = sprite.rect.bottom
+                        # Se a gravidade é normal, o "teto" é top. Se invertida, o "chão" é top.
+                        if self.gravidade_valor > 0: # Gravidade normal
+                            self.rect.top = sprite.rect.bottom
+                        else: # Gravidade negativa
+                            self.rect.bottom = sprite.rect.top 
                         self.subindo_escada = False
                         self.alvo_escada_x = None
                         
@@ -232,26 +241,23 @@ class Jogador(Sprite):
             else:
                 self.movendo = False
             
-            if self.descer_tecla: # verifica colisao com o chao só quando desce a escada
+            # verificação de colisão com o chão (apenas ao descer a escada)
+            if self.descer_tecla: 
                 for sprite in self.collision_sprites:
                     if sprite.rect.colliderect(self.rect):
-                        
-                        if self.rect.bottom > sprite.rect.top: 
+                        # Se a gravidade é normal, o "chão" é bottom. Se invertida, o "teto" é bottom.
+                        if self.gravidade_valor > 0: # Gravidade normal
                             self.rect.bottom = sprite.rect.top
-                            self.direcao.y = 0
-                            self.no_chao = True
-                            
-                            # sai do modo escada
-                            self.subindo_escada = False
-                            self.alvo_escada_x = None
-                            break
-            
-            if not tocando_escada:
-                 self.subindo_escada = False
-                 self.alvo_escada_x = None
+                        else: # Gravidade negativa
+                            self.rect.top = sprite.rect.bottom
 
-        else:
-            self.direcao.y += self.gravidade * dt
+                        self.direcao.y = 0
+                        self.no_chao = True
+                        self.subindo_escada = False
+                        self.alvo_escada_x = None
+                        break
+        else: # NOVO: Aplica a gravidade dinâmica (self.gravidade_valor)
+            self.direcao.y += self.gravidade_valor * dt
             self.rect.y += int(self.direcao.y)
             self.collision('vertical')
             
@@ -267,16 +273,34 @@ class Jogador(Sprite):
                     if self.direcao.x < 0:
                         self.rect.left = sprite.rect.right
                 if direcao == 'vertical':
-                    if self.subindo_escada:
+                    if self.subindo_escada: # Já tratada na lógica da escada
                         continue
-                    if self.direcao.y > 0:
-                        # caindo -> posiciona em cima do bloco
-                        self.rect.bottom = sprite.rect.top
+                        
+                    # Verifica se está caindo (na direção da gravidade)
+                    is_falling = (self.gravidade_valor > 0 and self.direcao.y > 0) or \
+                                 (self.gravidade_valor < 0 and self.direcao.y < 0)
+
+                    if is_falling:
+                        # Caindo: Posiciona em cima do chão (grav. normal) ou embaixo do "chão" (grav. negativa)
+                        if self.gravidade_valor > 0: # Gravidade Normal: Toca no topo do bloco (chão)
+                            self.rect.bottom = sprite.rect.top
+                        else: # Gravidade Negativa: Toca na base do bloco ("chão" ou teto)
+                            self.rect.top = sprite.rect.bottom
+                            
                         self.direcao.y = 0
                         self.no_chao = True
-                    if self.direcao.y < 0:
-                        # subindo -> posiciona abaixo do teto
-                        self.rect.top = sprite.rect.bottom
+                        
+                    # Verifica se está pulando/subindo (contra a gravidade)
+                    is_jumping = (self.gravidade_valor > 0 and self.direcao.y < 0) or \
+                                 (self.gravidade_valor < 0 and self.direcao.y > 0)
+
+                    if is_jumping:
+                        # Batendo no teto/obstáculo:
+                        if self.gravidade_valor > 0: # Gravidade Normal: Bateu no teto
+                            self.rect.top = sprite.rect.bottom
+                        else: # Gravidade Negativa: Bateu no "teto" (que é o chão na vdd)
+                            self.rect.bottom = sprite.rect.top 
+
                         self.direcao.y = 0
 
     def limitar_mundo(self):
@@ -286,35 +310,38 @@ class Jogador(Sprite):
         elif self.rect.right > self.mundo_w:
             self.rect.right = self.mundo_w
             
-        # limitacao vertical
-        if self.rect.top < 0:
-            self.rect.top = 0
-        elif self.rect.bottom > self.mundo_h:
-            # por enquanto só limita a borda inferior 
-            self.rect.bottom = self.mundo_h
-            self.direcao.y = 0  # zera velocidade vertical para parar a queda
-            self.no_chao = True # assume que ele toca no limite inferior 
+        # NOVO: Limitação vertical depende da gravidade
+        if self.gravidade_valor > 0: # Gravidade Normal: Chão é embaixo
+            if self.rect.top < 0:
+                self.rect.top = 0 # Não pode subir acima do limite do mapa
+                self.direcao.y = 0 # Zera velocidade vertical
+            elif self.rect.bottom > self.mundo_h:
+                self.rect.bottom = self.mundo_h
+                self.direcao.y = 0 
+                self.no_chao = True 
+        else: # Gravidade Negativa: Chão é em cima
+            if self.rect.bottom > self.mundo_h: # Não pode cair abaixo do limite do mapa
+                self.rect.bottom = self.mundo_h
+                self.direcao.y = 0 # Zera velocidade vertical
+            elif self.rect.top < 0: # Bateu no "chão" (topo do mapa)
+                self.rect.top = 0
+                self.direcao.y = 0
+                self.no_chao = True
 
     def update(self, dt):
         self.input()
         self.move(dt)
         self.limitar_mundo()
 
+        # ... (Lógica de animação permanece a mesma)
         if self.movendo:
-            # troca de Frame: se movendo, incrementa o timer
             self.animacao_timer += dt
-            
-            # se o tempo para o proximo frame é atingido:
             if self.animacao_timer >= self.VELOCIDADE_ANIMACAO:
                 self.animacao_timer = 0.0
-                
-                # avanca para o próximo frame - loop
                 num_frames = len(self.animacoes[self.direcao_atual])
                 self.frame_index = (self.frame_index + 1) % num_frames
         else:
-            # definindo a imagem 0 para pose parada em cada direcao de animacao 
             self.frame_index = 0
-            self.animacao_timer = 0.0 # reseta o timer
+            self.animacao_timer = 0.0 
             
-        # atualiza a imagem desenhada na tela
         self.image = self.animacoes[self.direcao_atual][self.frame_index]
