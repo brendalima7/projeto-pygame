@@ -104,6 +104,19 @@ class Jogador(Sprite):
         self.mundo_w = mundo_w
         self.mundo_h = mundo_h
 
+        # receber dicionario de animacoes
+        self.animacoes = assets['animacoes_jogador']
+        self.direcao_atual = 'right' # inicial
+        self.movendo = False
+        self.frame_index = 0
+        self.animacao_timer = 0.0
+        self.VELOCIDADE_ANIMACAO = 0.1 # troca de quadros
+
+        self.image = self.animacoes[self.direcao_atual][self.frame_index]
+
+        # rect do jogador
+        self.rect = self.image.get_rect(center = pos)
+
         # movimento & colisao
         self.direcao = pygame.Vector2()
         self.collision_sprites = collision_sprites
@@ -113,7 +126,18 @@ class Jogador(Sprite):
     
     def input(self):
         keys = pygame.key.get_pressed()
-        self.direcao.x = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
+        self.movendo = False
+        self.direcao.x = 0
+
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            self.direcao.x = -1
+            self.direcao_atual = 'left'
+            self.movendo = True
+        elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            self.direcao.x = 1
+            self.direcao_atual = 'right'
+            self.movendo = True
+        
         if keys[pygame.K_SPACE] and self.no_chao:
             self.direcao.y = -20
 
@@ -161,3 +185,22 @@ class Jogador(Sprite):
         self.input()
         self.move(dt)
         self.limitar_mundo()
+
+        if self.movendo:
+            # troca de Frame: se movendo, incrementa o timer
+            self.animacao_timer += dt
+            
+            # se o tempo para o proximo frame é atingido:
+            if self.animacao_timer >= self.VELOCIDADE_ANIMACAO:
+                self.animacao_timer = 0.0
+                
+                # avanca para o próximo frame - loop
+                num_frames = len(self.animacoes[self.direcao_atual])
+                self.frame_index = (self.frame_index + 1) % num_frames
+        else:
+            # definindo a imagem 0 para pose parada em cada direcao de animacao 
+            self.frame_index = 0
+            self.animacao_timer = 0.0 # reseta o timer
+            
+        # atualiza a imagem desenhada na tela
+        self.image = self.animacoes[self.direcao_atual][self.frame_index]

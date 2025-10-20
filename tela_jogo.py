@@ -40,7 +40,11 @@ class TelaJogo:
 
         for x, y, imagem in tmx_mapa.get_layer_by_name('Agua').tiles():
             # instancia a classe Sprite para criar os blocos
-            Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, (self.all_sprites, self.collision_sprites)) 
+            Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, (self.all_sprites, self.collision_sprites))
+
+        for x, y, imagem in tmx_mapa.get_layer_by_name('Escada').tiles():
+            # instancia a classe Sprite para criar os blocos
+            Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, self.all_sprites)  
         
   
     def handle_event(self, event):
