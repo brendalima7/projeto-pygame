@@ -104,6 +104,8 @@ class Jogador(Sprite):
         self.mundo_w = mundo_w
         self.mundo_h = mundo_h
 
+        self.vidas = assets['vidas_max']
+
         # receber dicionario de animacoes
         self.animacoes = assets['animacoes_jogador']
         self.direcao_atual = 'right' # inicial
@@ -129,6 +131,17 @@ class Jogador(Sprite):
         self.subindo_escada = False     
         self.alvo_escada_x = None        
         self.velocidade_subida = 120   
+
+    def reset_state(self):
+        self.direcao.x = 0
+        self.direcao.y = 0 # Zera a velocidade vertical para evitar queda imediata
+        self.subindo_escada = False
+        self.alvo_escada_x = None
+        self.movendo = False
+        self.frame_index = 0
+        self.animacao_timer = 0.0
+        # O estado 'no_chao' será redefinido pelo próximo ciclo de colisão
+        pass
     
     def input(self):
         keys = pygame.key.get_pressed()
