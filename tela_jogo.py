@@ -8,6 +8,7 @@ class TelaJogo:
         self.assets = assets
 
         self.collision_sprites = pygame.sprite.Group()
+        self.grupo_escadas = pygame.sprite.Group()
         
         self.jogador = None
 
@@ -35,7 +36,8 @@ class TelaJogo:
                     self.window, self.assets, 
                     (objeto.x * SCALE_FACTOR , objeto.y * SCALE_FACTOR), 
                     self.all_sprites, self.collision_sprites,
-                    map_pixel_width, map_pixel_height
+                    map_pixel_width, map_pixel_height, 
+                    self.grupo_escadas
                     )
 
         for x, y, imagem in tmx_mapa.get_layer_by_name('Agua').tiles():
@@ -44,7 +46,7 @@ class TelaJogo:
 
         for x, y, imagem in tmx_mapa.get_layer_by_name('Escada').tiles():
             # instancia a classe Sprite para criar os blocos
-            Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, self.all_sprites)  
+            Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, self.all_sprites, self.grupo_escadas)  
         
   
     def handle_event(self, event):

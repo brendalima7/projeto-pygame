@@ -24,7 +24,7 @@ def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
 
 def condicoes_iniciais(): 
     assets = {} 
-    assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (10,10))
+    assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (100,100))
     assets['map_surface'] = pygame.image.load('assets/ground.png').convert_alpha()
     assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
     assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundoinvertido.png'), (3200,1600))
