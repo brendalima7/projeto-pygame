@@ -7,8 +7,6 @@ class TelaJogo:
         self.window = window
         self.assets = assets
 
-        # grupos - usando CameraGroup para seguir o jogador
-        self.all_sprites = CameraGroup(5000, 2500)
         self.collision_sprites = pygame.sprite.Group()
         
         self.jogador = None
@@ -18,6 +16,12 @@ class TelaJogo:
 
     def setup(self):
         tmx_mapa = load_pygame(join('data', 'mapa_teste.tmx'))
+
+        map_pixel_width = tmx_mapa.width * TILE_SIZE
+        map_pixel_height = tmx_mapa.height * TILE_SIZE
+        
+        self.all_sprites = CameraGroup(map_pixel_width, map_pixel_height)
+
         for x, y, imagem in tmx_mapa.get_layer_by_name('Principal').tiles():
             # instancia a classe Sprite para criar os blocos
             Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, (self.all_sprites, self.collision_sprites))  
@@ -27,7 +31,13 @@ class TelaJogo:
         for objeto in tmx_mapa.get_layer_by_name('Entities'):
             if objeto.name == 'Player':
                 # instancia a classe Jogador para criar o jogador na posicao do Entities determinada
-                self.jogador = Jogador(self.window, self.assets, (objeto.x, objeto.y), self.all_sprites, self.collision_sprites)
+                self.jogador = Jogador(
+                    self.window, self.assets, 
+                    (objeto.x * SCALE_FACTOR , objeto.y * SCALE_FACTOR), 
+                    self.all_sprites, self.collision_sprites,
+                    map_pixel_width, map_pixel_height
+                    )
+
         for x, y, imagem in tmx_mapa.get_layer_by_name('Agua').tiles():
             # instancia a classe Sprite para criar os blocos
             Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, (self.all_sprites, self.collision_sprites)) 

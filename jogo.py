@@ -26,11 +26,8 @@ def condicoes_iniciais():
     assets = {} 
     assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (100,100))
     assets['map_surface'] = pygame.image.load('assets/ground.png').convert_alpha()
-    assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (5000,2500))
-    assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundoinvertido.png'), (5000,2500))
-    assets['mapa_do_jogo'] = pygame.transform.scale(pygame.image.load('assets/mapa_normal_colisao.png'),(5000,2500))
-    assets['mapa_jogo_decoracao'] = pygame.transform.scale(pygame.image.load('assets/mapa_jogo_decoracao.png'),(5000,2500))
-    assets['mapa_jogo_escada'] = pygame.transform.scale(pygame.image.load('assets/mapa_jogo_escada.png'),(5000,2500))
+    assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
+    assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundoinvertido.png'), (3200,1600))
 
     # imagens de animacao 
     assets['animacoes_jogador'] = carrega_frames_animacao(

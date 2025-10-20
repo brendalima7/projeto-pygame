@@ -19,6 +19,8 @@ MAP_W, MAP_H = map_surface.get_size()
 
 # cores e outros valores
 PRETO = (0, 0, 0)
+AZUL = '#207bfa'
 VERMELHO = (255, 0, 0)
 VERDE_MAPA = (34, 139, 34)
 COR_FUNDO = '#FFFFFF'
+PARALLAX_FACTOR = 0.3

@@ -94,12 +94,15 @@ class Sprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft = pos)
 
 class Jogador(Sprite):
-    def __init__(self, window, assets, pos, groups, collision_sprites):
+    def __init__(self, window, assets, pos, groups, collision_sprites, mundo_w, mundo_h):
         surf = pygame.Surface((10,10))
         super().__init__(pos, surf, groups)
 
         self.window = window
         self.assets = assets
+
+        self.mundo_w = mundo_w
+        self.mundo_h = mundo_h
 
         # movimento & colisao
         self.direcao = pygame.Vector2()
@@ -138,6 +141,23 @@ class Jogador(Sprite):
                         self.no_chao = True
                     if self.direcao.y < 0: self.rect.top = sprite.rect.bottom
 
+    def limitar_mundo(self):
+        # limitacao horizontal 
+        if self.rect.left < 0:
+            self.rect.left = 0
+        elif self.rect.right > self.mundo_w:
+            self.rect.right = self.mundo_w
+            
+        # limitacao vertical
+        if self.rect.top < 0:
+            self.rect.top = 0
+        elif self.rect.bottom > self.mundo_h:
+            # por enquanto só limita a borda inferior 
+            self.rect.bottom = self.mundo_h
+            self.direcao.y = 0  # zera velocidade vertical para parar a queda
+            self.no_chao = True # assume que ele toca no limite inferior 
+
     def update(self, dt):
         self.input()
         self.move(dt)
+        self.limitar_mundo()

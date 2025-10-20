@@ -1,7 +1,7 @@
 import pygame
 from sprites import JogadorMapa
 from cameras import CameraGroup
-import constantes
+from constantes import *
 
 class TelaMapa: 
     def __init__(self, window, assets):
@@ -9,21 +9,21 @@ class TelaMapa:
         self.assets = assets 
         
         # cria o grupo de camera passando as dimensoes do mapa
-        self.camera_grupo = CameraGroup(constantes.MAP_W, constantes.MAP_H)
+        self.camera_grupo = CameraGroup(MAP_W, MAP_H)
         
         # cria a superficie do mapa 
         self.map_surface = assets['map_surface']
 
         # posicao inicial do jogador
-        posicao_inicial = (constantes.MAP_W / 2, constantes.MAP_H / 2)
+        posicao_inicial = (MAP_W / 2, MAP_H / 2)
         # passa self.camera_grupo como o grupo para o jogador
         self.jogador = JogadorMapa(self.window, self.assets, posicao_inicial, self.camera_grupo) 
         
     def draw(self):
-        self.window.fill(constantes.PRETO)
+        self.window.fill(AZUL)
         
         # desenha tudo (fundo + sprites) usando o custom_draw da camera
-        self.camera_grupo.custom_draw(self.jogador, self.map_surface)
+        self.camera_grupo.draw_mapa_sem_parallax(self.jogador, self.map_surface)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
