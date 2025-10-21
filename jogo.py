@@ -28,6 +28,9 @@ def condicoes_iniciais():
     assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
     assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundoinvertido.png'), (3200,1600))
     assets['fonte'] = pygame.font.Font('assets/font/PressStart2P.ttf', 28)
+    assets['fonte2'] = pygame.font.Font('assets/font/PressStart2P.ttf', 24)
+    assets['fundo_inicial']=pygame.transform.scale(pygame.image.load('assets/fundo_inicial.png'), (1600,880))
+
     # imagens de animacao jogador
     assets['animacoes_jogador'] = carrega_frames_animacao(
         arquivo_base='assets/jogador_mapa',
@@ -55,7 +58,7 @@ class Jogo:
 
         self.assets = condicoes_iniciais()
         self.telas = {
-            'INICIO': TelaInicio(self.window),
+            'INICIO': TelaInicio(self.window,self.assets),
             'JOGO': TelaJogo(self.window, self.assets),
             'VITORIA': TelaVitoria(self.window),
             'GAMEOVER': TelaGameOver(self.window)
