@@ -20,13 +20,21 @@ class Jogador(Sprite):
         self.vidas = assets['vidas_max']
 
         # receber dicionario de animacoes
+        # espera-se formato: {'right': [surf1, surf2, ...], 'left': [...]}
         self.animacoes = assets['animacoes_jogador']
+        # --- novo: pré-calcula as versões invertidas verticalmente ---
+        self.animacoes_invertidas = {}
+        for key, frames in self.animacoes.items():
+            # cria lista de frames virados de cabeça para baixo (flip vertical)
+            self.animacoes_invertidas[key] = [pygame.transform.flip(f, False, True) for f in frames]
+
         self.direcao_atual = 'right' # inicial
         self.movendo = False
         self.frame_index = 0
         self.animacao_timer = 0.0
         self.VELOCIDADE_ANIMACAO = 0.1 # troca de quadros
 
+        # usa o frame inicial normal (gravidade inicial é definida abaixo)
         self.image = self.animacoes[self.direcao_atual][self.frame_index]
 
         # rect do jogador
@@ -56,6 +64,8 @@ class Jogador(Sprite):
         # Opcional: Reseta a velocidade vertical e no_chao para evitar comportamentos estranhos na transição
         self.direcao.y = 0
         self.no_chao = False
+        # Mantemos frame_index — apenas ao atualizar, o código escolherá a versão invertida
+        # (nenhuma necessidade de recriar frames, pois já pré-calculamos)
 
     def reset_state(self):
         self.direcao.x = 0
@@ -77,7 +87,6 @@ class Jogador(Sprite):
         self.descer_tecla = False
 
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-            # Condição da escada desnecessária aqui, já que o movimento horizontal é travado no move()
             self.direcao.x = -1
             self.direcao_atual = 'left'
             self.movendo = True
@@ -246,18 +255,39 @@ class Jogador(Sprite):
         self.move(dt)
         self.limitar_mundo()
 
-        # ... (Lógica de animação permanece a mesma)
+        # --- animação ---
         if self.movendo:
             self.animacao_timer += dt
             if self.animacao_timer >= self.VELOCIDADE_ANIMACAO:
                 self.animacao_timer = 0.0
-                num_frames = len(self.animacoes[self.direcao_atual])
+                # escolhe a lista de frames (normal ou invertida) dependendo do sinal da gravidade
+                if self.gravidade_valor < 0:
+                    num_frames = len(self.animacoes_invertidas[self.direcao_atual])
+                else:
+                    num_frames = len(self.animacoes[self.direcao_atual])
                 self.frame_index = (self.frame_index + 1) % num_frames
         else:
             self.frame_index = 0
             self.animacao_timer = 0.0 
             
-        self.image = self.animacoes[self.direcao_atual][self.frame_index]
+        # escolhe frames correto no momento de desenhar a imagem
+        if self.gravidade_valor < 0:
+            frames_list = self.animacoes_invertidas[self.direcao_atual]
+        else:
+            frames_list = self.animacoes[self.direcao_atual]
+
+        # garante que frame_index está dentro do limite da lista escolhida
+        if self.frame_index >= len(frames_list):
+            self.frame_index = 0
+
+        # preserva o centro do rect ao trocar a imagem (evita "pulos")
+        old_center = self.rect.center
+        self.image = frames_list[self.frame_index]
+        self.rect = self.image.get_rect(center=old_center)
+
+        # Se você usa colisão por máscara, atualize a mask aqui:
+        # self.mask = pygame.mask.from_surface(self.image)
+
 
 class Monstro(Sprite):
     def __init__(self, pos, groups, assets, collision_sprites, limites_patrulha, jogador_ref, grupo_monstros):
