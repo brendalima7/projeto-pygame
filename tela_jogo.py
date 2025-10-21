@@ -191,28 +191,37 @@ class TelaJogo:
             if pygame.sprite.spritecollideany(self.jogador, self.grupo_agua):
                 estado_atual = self.jogador_vivo()
                 
-            # checa colisão com monstros (uso de prev_rect para detectar crossing/landing)
-                    # checa colisão com monstros (usando mask pixel-perfect)
+        # checa colisão com monstros (pré-filtro por rect, depois mask)
         for monstro in self.grupo_monstros:
-            # Verifica colisão de máscaras
-            if pygame.sprite.collide_mask(self.jogador, monstro):
-                prev = getattr(self.jogador, 'prev_rect', self.jogador.rect)
+            # pré-filtro: se nem os rects se tocam, ignora
+            if not self.jogador.rect.colliderect(monstro.rect):
+                continue
 
-                # parâmetros
-                LAND_TOLERANCE = 10
-                HORIZ_ALIGN_FACTOR = 0.6
+            # agora temos um rect-overlap: tenta colisão por mask (pixel-perfect)
+            mask_overlap = False
+            try:
+                mask_overlap = pygame.sprite.collide_mask(self.jogador, monstro) is not None
+            except Exception:
+                # se as masks não existirem por algum motivo, considera false e cairá no branch de dano por rect
+                mask_overlap = False
 
-                largura_rel = max(monstro.rect.width, self.jogador.rect.width)
-                alinhado_horizontal = abs(self.jogador.rect.centerx - monstro.rect.centerx) <= largura_rel * HORIZ_ALIGN_FACTOR
+            # pega prev_rect (fallback para current rect caso não exista)
+            prev = getattr(self.jogador, 'prev_rect', self.jogador.rect)
 
+            # parâmetros
+            LAND_TOLERANCE = 10
+            HORIZ_ALIGN_FACTOR = 0.6
+
+            largura_rel = max(monstro.rect.width, self.jogador.rect.width)
+            alinhado_horizontal = abs(self.jogador.rect.centerx - monstro.rect.centerx) <= largura_rel * HORIZ_ALIGN_FACTOR
+
+            if mask_overlap:
                 if self.jogador.gravidade_valor > 0:
-                    # Gravidade normal: jogador vem de cima
                     came_from_above = prev.bottom <= monstro.rect.top
                     now_overlaps = self.jogador.rect.bottom >= monstro.rect.top - LAND_TOLERANCE
                     moving_towards = self.jogador.direcao.y > 0
                     is_landing = came_from_above and now_overlaps and moving_towards and alinhado_horizontal
                 else:
-                    # Gravidade invertida: jogador vem de baixo
                     came_from_below = prev.top >= monstro.rect.bottom
                     now_overlaps = self.jogador.rect.top <= monstro.rect.bottom + LAND_TOLERANCE
                     moving_towards = self.jogador.direcao.y < 0
@@ -220,6 +229,23 @@ class TelaJogo:
 
                 if is_landing:
                     monstro.kill()
+                    # ricochete: força o sinal dependendo da gravidade
+                    sinal = -1 if self.jogador.gravidade_valor < 0 else 1
+                    # usa o valor absoluto da velocidade_y para garantir direção correta
+                    try:
+                        self.jogador.direcao.y = sinal * (abs(self.jogador.velocidade_y) / 2)
+                    except Exception:
+                        self.jogador.direcao.y = 0
+                    continue
+
+                # se houve overlap de mask mas não foi landing, é dano
+                estado_atual = self.jogador_vivo()
+                break
+
+            else:
+                # nao houve overlap de mask, mas houve overlap de rect -> tratar como dano 
+                estado_atual = self.jogador_vivo()
+                break
 
 
         return estado_atual

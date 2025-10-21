@@ -10,8 +10,6 @@ class TelaGameOver:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                 return 'SAIR'
-            # if event.key == pygame.K_r:
-            #     return 'RESTART'
             if event.key == pygame.K_SPACE:
                 return 'RESTART'
         return None

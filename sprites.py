@@ -203,24 +203,23 @@ class Jogador(Sprite):
                                  (self.gravidade_valor < 0 and self.direcao.y < 0)
 
                     if is_falling:
-                        # Caindo: Posiciona em cima do chão (grav. normal) ou embaixo do "chão" (grav. negativa)
-                        if self.gravidade_valor > 0: # Gravidade Normal: Toca no topo do bloco (chão)
+                        if self.gravidade_valor > 0: 
                             self.rect.bottom = sprite.rect.top
-                        else: # Gravidade Negativa: Toca na base do bloco ("chão" ou teto)
+                        else: 
                             self.rect.top = sprite.rect.bottom
                             
                         self.direcao.y = 0
                         self.no_chao = True
                         
-                    # Verifica se está pulando/subindo (contra a gravidade)
+                    # verifica se está pulando/subindo (contra a gravidade)
                     is_jumping = (self.gravidade_valor > 0 and self.direcao.y < 0) or \
                                  (self.gravidade_valor < 0 and self.direcao.y > 0)
 
                     if is_jumping:
-                        # Batendo no teto/obstáculo:
-                        if self.gravidade_valor > 0: # Gravidade Normal: Bateu no teto
+                        # batendo no teto/obstáculo:
+                        if self.gravidade_valor > 0: # gravidade normal: bateu no teto
                             self.rect.top = sprite.rect.bottom
-                        else: # Gravidade Negativa: Bateu no "teto" (que é o chão na vdd)
+                        else: # gravidade negativa: bateu no  "teto" (chao)
                             self.rect.bottom = sprite.rect.top 
 
                         self.direcao.y = 0
@@ -232,20 +231,20 @@ class Jogador(Sprite):
         elif self.rect.right > self.mundo_w:
             self.rect.right = self.mundo_w
             
-        # NOVO: Limitação vertical depende da gravidade
-        if self.gravidade_valor > 0: # Gravidade Normal: Chão é embaixo
+        # limitacao vertical dependendo da gravidade
+        if self.gravidade_valor > 0: # gravidade nomeal
             if self.rect.top < 0:
-                self.rect.top = 0 # Não pode subir acima do limite do mapa
-                self.direcao.y = 0 # Zera velocidade vertical
+                self.rect.top = 0 
+                self.direcao.y = 0 
             elif self.rect.bottom > self.mundo_h:
                 self.rect.bottom = self.mundo_h
                 self.direcao.y = 0 
                 self.no_chao = True 
-        else: # Gravidade Negativa: Chão é em cima
-            if self.rect.bottom > self.mundo_h: # Não pode cair abaixo do limite do mapa
+        else: # gravidade negativa
+            if self.rect.bottom > self.mundo_h: # limite inferior
                 self.rect.bottom = self.mundo_h
-                self.direcao.y = 0 # Zera velocidade vertical
-            elif self.rect.top < 0: # Bateu no "chão" (topo do mapa)
+                self.direcao.y = 0 
+            elif self.rect.top < 0: 
                 self.rect.top = 0
                 self.direcao.y = 0
                 self.no_chao = True
@@ -254,7 +253,7 @@ class Jogador(Sprite):
         
         self.prev_rect = self.rect.copy()
 
-        # comportamento normal do jogador (input, física, limites)
+        # comportamento normal do jogador
         self.input()
         self.move(dt)
         self.limitar_mundo()
@@ -288,9 +287,6 @@ class Jogador(Sprite):
         old_center = self.rect.center
         self.image = frames_list[self.frame_index]
         self.rect = self.image.get_rect(center=old_center)
-
-        # Se você usa colisão por máscara, atualize a mask aqui:
-        # self.mask = pygame.mask.from_surface(self.image)
 
 class Monstro(Sprite):
     def __init__(self, pos, groups, assets, collision_sprites, limites_patrulha, jogador_ref, grupo_monstros, water_sprites=None):
