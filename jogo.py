@@ -81,6 +81,8 @@ class Jogo:
                     if resultado == 'SAIR':
                         self.rodando = False
                     elif resultado and resultado in self.telas:
+                        if resultado == 'JOGO':
+                            self.telas['JOGO'].iniciar_tempo_gravidade()
                         self.tela_atual = resultado
 
             # atualiza a tela atual
@@ -89,6 +91,10 @@ class Jogo:
 
             # troca de tela se necessário
             if proximo_estado and proximo_estado != self.tela_atual:
+
+             # se o próximo estado for 'JOGO', inicia o tempo da gravidade.
+                if proximo_estado == 'JOGO':
+                    self.telas['JOGO'].iniciar_tempo_gravidade()
                 self.tela_atual = proximo_estado
 
             # desenha a tela atual

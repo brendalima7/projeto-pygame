@@ -21,7 +21,7 @@ class TelaJogo:
 
         # variaveis para o ciclo de gravidade
         self.gravidade_invertida = False
-        self.tempo_inicio_estado = pygame.time.get_ticks() 
+        self.tempo_inicio_estado = None 
         self.intervalo_mudanca = tempo_mudanca_gravidade # Definido em constantes.py
         
         # varivael para rastrear a chave da imagem de fundo atual
@@ -33,6 +33,9 @@ class TelaJogo:
         # garante que o jogador já está com a gravidade e pulo iniciais
         if self.jogador:
             self.jogador.set_gravidade(gravidade_normal, velocidade_y)
+
+    def iniciar_tempo_gravidade(self):
+        self.tempo_inicio_estado = pygame.time.get_ticks()
 
     def setup(self):
         tmx_mapa = load_pygame(join('data', 'mapa_teste.tmx'))
@@ -132,6 +135,7 @@ class TelaJogo:
             self.jogador.reset_state() 
             # rarante que a gravidade é resetada para o estado atual do jogo após o respawn
             self.alternar_gravidade(force_state=self.gravidade_invertida) # Força o estado da gravidade atual
+            
             return 'JOGO'
             
     # controla alternancia de  gravidade e fundo
@@ -176,9 +180,10 @@ class TelaJogo:
         self.all_sprites.update(dt)
 
         # checa timer para alternar gravidade
-        tempo_atual = pygame.time.get_ticks()
-        if tempo_atual - self.tempo_inicio_estado >= self.intervalo_mudanca:
-            self.alternar_gravidade() # Alterna sem forçar estado
+        if self.tempo_inicio_estado is not None:
+            tempo_atual = pygame.time.get_ticks()
+            if tempo_atual - self.tempo_inicio_estado >= self.intervalo_mudanca:
+                self.alternar_gravidade() 
             
         # checa colisão com a água
         estado_atual = 'JOGO'
@@ -228,15 +233,16 @@ class TelaJogo:
             img_cor = self.assets['fonte'].render(texto_coracoes, True, (255, 0, 0)) 
             self.window.blit(img_cor, (10, 10))
             
-            # NOVO: Desenho do Timer
-            tempo_decorrido_ms = pygame.time.get_ticks() - self.tempo_inicio_estado
-            tempo_restante_s = max(0, (self.intervalo_mudanca - tempo_decorrido_ms) / 1000)
-            texto_tempo = f"MUDANÇA EM: {tempo_restante_s:.1f}s"
-            img_tempo = self.assets['fonte'].render(texto_tempo, True, (255, 255, 255))
-            
-            # posição do texto tempo
-            pos_x = self.window.get_width() // 2 - img_tempo.get_width() // 2
-            self.window.blit(img_tempo, (pos_x, 10))
+            # desenha só quando o jogo começa
+            if self.tempo_inicio_estado is not None:
+                tempo_decorrido_ms = pygame.time.get_ticks() - self.tempo_inicio_estado
+                tempo_restante_s = max(0, (self.intervalo_mudanca - tempo_decorrido_ms) / 1000)
+                texto_tempo = f"MUDANÇA EM: {tempo_restante_s:.1f}s"
+                img_tempo = self.assets['fonte'].render(texto_tempo, True, (255, 255, 255))
+                
+                # posição do texto tempo
+                pos_x = self.window.get_width() // 2 - img_tempo.get_width() // 2
+                self.window.blit(img_tempo, (pos_x, 10))
             
         else:
             self.all_sprites.draw(self.window)
