@@ -30,6 +30,9 @@ class TelaJogo:
         # inventario: lista de dicts {'tipo': str, 'image': Surface}
         self.inventario = []
         self.mostrar_inventario = False
+        # contador de shields: total no mapa e coletados
+        self.total_shields = 0
+        self.shields_coletados = 0
         
         # load game
         self.setup()
@@ -127,10 +130,10 @@ class TelaJogo:
         for x, y, imagem in tmx_mapa.get_layer_by_name('Escada').tiles():
             Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, self.all_sprites, self.grupo_escadas) 
         # Carrega itens da layer 'Items' (se existir) — espera tiles com gid e propriedades name
-        try:
+        layer_items = None
+        layer_names = [getattr(layer, 'name', None) for layer in tmx_mapa.layers]
+        if 'Items' in layer_names:
             layer_items = tmx_mapa.get_layer_by_name('Items')
-        except Exception:
-            layer_items = None
 
         if layer_items:
             for objeto in layer_items:
@@ -140,10 +143,7 @@ class TelaJogo:
                 if gid is None:
                     continue
                 # obtém a imagem do gid via pytmx
-                try:
-                    imagem = tmx_mapa.get_tile_image_by_gid(gid)
-                except Exception:
-                    imagem = None
+                imagem = tmx_mapa.get_tile_image_by_gid(gid)
                 if imagem is None:
                     continue
 
@@ -151,21 +151,17 @@ class TelaJogo:
                 y_scaled = objeto.y * SCALE_FACTOR
 
                 # instancia Item (classe definida em sprites.py)
-                try:
-                    Item((x_scaled, y_scaled), imagem, nome, self.all_sprites, self.grupo_items)
-                except Exception:
-                    # fallback: usar Sprite se Item não estiver disponível
-                    Sprite((x_scaled, y_scaled), imagem, (self.all_sprites,))
+                Item((x_scaled, y_scaled), imagem, nome, self.all_sprites, self.grupo_items)
+                # conta shields
+                if nome == 'shield':
+                    self.total_shields += 1
             
     def jogador_vivo (self):
         self.jogador.vidas -= 1
         
         if self.jogador.vidas <= 0:
             # limpa inventario ao morrer
-            try:
-                self.inventario.clear()
-            except Exception:
-                self.inventario = []
+            self.inventario.clear()
             return 'GAMEOVER'
         else:
             # reseta a posição do jogador para o ponto de spawn
@@ -214,10 +210,6 @@ class TelaJogo:
                 return None
             if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                 return 'SAIR'
-            if event.key == pygame.K_a:
-                return 'GAMEOVER' 
-            if event.key == pygame.K_v:
-                return 'VITORIA' 
         return None
                 
     def update(self, dt):
@@ -240,13 +232,12 @@ class TelaJogo:
             for item in itens_coletados:
                 tipo = getattr(item, 'tipo', None)
                 # guarda no inventario (mantendo a imagem original para exibir)
-                try:
-                    # preserva cópia da imagem em escala atual
-                    imagem_item = item.image.copy()
-                except Exception:
-                    imagem_item = None
+                imagem_item = item.image.copy() if hasattr(item, 'image') and item.image is not None else None
 
                 self.inventario.append({'tipo': tipo, 'image': imagem_item})
+
+                if tipo == 'shield':
+                    self.shields_coletados += 1
 
                 # remove o item do mapa
                 item.kill()
@@ -257,55 +248,40 @@ class TelaJogo:
             if not self.jogador.rect.colliderect(monstro.rect):
                 continue
 
-            # agora temos um rect-overlap: tenta colisão por mask (pixel-perfect)
-            mask_overlap = False
-            try:
-                mask_overlap = pygame.sprite.collide_mask(self.jogador, monstro) is not None
-            except Exception:
-                # se as masks não existirem por algum motivo, considera false e cairá no branch de dano por rect
-                mask_overlap = False
-
-            # pega prev_rect (fallback para current rect caso não exista)
+            # temos rect-overlap: decide se é 'landing' usando metade inferior do jogador
+            # vs metade superior do monstro (ou invertido quando a gravidade está invertida)
             prev = getattr(self.jogador, 'prev_rect', self.jogador.rect)
 
-            # parâmetros
-            LAND_TOLERANCE = 10
-            HORIZ_ALIGN_FACTOR = 0.6
+            LAND_TOLERANCE = 20
+            HORIZ_ALIGN_FACTOR = 1.0
 
             largura_rel = max(monstro.rect.width, self.jogador.rect.width)
             alinhado_horizontal = abs(self.jogador.rect.centerx - monstro.rect.centerx) <= largura_rel * HORIZ_ALIGN_FACTOR
 
-            if mask_overlap:
-                if self.jogador.gravidade_valor > 0:
-                    came_from_above = prev.bottom <= monstro.rect.top
-                    now_overlaps = self.jogador.rect.bottom >= monstro.rect.top - LAND_TOLERANCE
-                    moving_towards = self.jogador.direcao.y > 0
-                    is_landing = came_from_above and now_overlaps and moving_towards and alinhado_horizontal
-                else:
-                    came_from_below = prev.top >= monstro.rect.bottom
-                    now_overlaps = self.jogador.rect.top <= monstro.rect.bottom + LAND_TOLERANCE
-                    moving_towards = self.jogador.direcao.y < 0
-                    is_landing = came_from_below and now_overlaps and moving_towards and alinhado_horizontal
+            player_half = self.jogador.rect.copy()
+            monster_half = monstro.rect.copy()
 
-                if is_landing:
-                    monstro.kill()
-                    # ricochete: força o sinal dependendo da gravidade
-                    sinal = -1 if self.jogador.gravidade_valor < 0 else 1
-                    # usa o valor absoluto da velocidade_y para garantir direção correta
-                    try:
-                        self.jogador.direcao.y = sinal * (abs(self.jogador.velocidade_y) / 2)
-                    except Exception:
-                        self.jogador.direcao.y = 0
-                    continue
-
-                # se houve overlap de mask mas não foi landing, é dano
-                estado_atual = self.jogador_vivo()
-                break
-
+            if self.jogador.gravidade_valor > 0:
+                # gravidade normal: jogador metade inferior x monstro metade superior
+                player_half.top = self.jogador.rect.centery
+                monster_half.bottom = monstro.rect.centery
+                moving_towards = (self.jogador.direcao.y > 0) or (prev.bottom <= monstro.rect.top + LAND_TOLERANCE)
             else:
-                # nao houve overlap de mask, mas houve overlap de rect -> tratar como dano 
-                estado_atual = self.jogador_vivo()
-                break
+                # gravidade invertida: jogador metade superior x monstro metade inferior
+                player_half.bottom = self.jogador.rect.centery
+                monster_half.top = monstro.rect.centery
+                moving_towards = (self.jogador.direcao.y < 0) or (prev.top >= monstro.rect.bottom - LAND_TOLERANCE)
+
+            if player_half.colliderect(monster_half) and moving_towards and alinhado_horizontal:
+                monstro.kill()
+                # ricochete: força o sinal dependendo da gravidade
+                sinal = -1 if self.jogador.gravidade_valor < 0 else 1
+                self.jogador.direcao.y = sinal * (abs(self.jogador.velocidade_y) / 2)
+                continue
+
+            # caso contrário, dano ao jogador
+            estado_atual = self.jogador_vivo()
+            break
 
 
         return estado_atual
@@ -355,13 +331,8 @@ class TelaJogo:
                 y = 40
                 for entry in self.inventario:
                     img = entry.get('image')
-                    if img:
-                        # redimensiona para thumb_size mantendo proporção
-                        try:
-                            thumb = pygame.transform.scale(img, (thumb_size, thumb_size))
-                        except Exception:
-                            thumb = pygame.Surface((thumb_size, thumb_size))
-                            thumb.fill((100,100,100))
+                    if isinstance(img, pygame.Surface):
+                        thumb = pygame.transform.scale(img, (thumb_size, thumb_size))
                     else:
                         thumb = pygame.Surface((thumb_size, thumb_size))
                         thumb.fill((100,100,100))
@@ -380,11 +351,8 @@ class TelaJogo:
     
     def restart(self):
         # limpa grupos antigos (se existirem)
-        try:
-            if hasattr(self, 'all_sprites'):
-                self.all_sprites.empty()
-        except Exception:
-            pass
+        if hasattr(self, 'all_sprites'):
+            self.all_sprites.empty()
 
         # grupos que criamos em setup()
         self.collision_sprites.empty()
@@ -393,10 +361,10 @@ class TelaJogo:
         self.grupo_agua.empty()
         self.grupo_items.empty()
         # limpa inventario também no restart
-        try:
-            self.inventario.clear()
-        except Exception:
-            self.inventario = []
+        self.inventario.clear()
+        # reseta contador de shields
+        self.total_shields = 0
+        self.shields_coletados = 0
 
         # opcional: zera variáveis de controle de tempo/gravidade
         self.tempo_inicio_estado = None
