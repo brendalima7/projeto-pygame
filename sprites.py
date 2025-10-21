@@ -6,6 +6,18 @@ class Sprite(pygame.sprite.Sprite):
         self.image = pygame.transform.scale_by(surf, SCALE_FACTOR)
         self.rect = self.image.get_rect(topleft = pos)
 
+    def draw(self, surface, offset=(0,0)):
+        """Desenha a sprite na surface aplicando o offset da câmera.
+
+        Args:
+            surface (Surface): Superfície onde desenhar a sprite
+            offset (tuple|Vector2): Deslocamento da câmera (x, y)
+        """
+        # Garante que offset seja Vector2 para subtração
+        off = pygame.math.Vector2(int(offset[0]), int(offset[1])) if not isinstance(offset, pygame.math.Vector2) else offset
+        pos = pygame.math.Vector2(self.rect.topleft) - off
+        surface.blit(self.image, (int(pos.x), int(pos.y)))
+
 
 class Item(Sprite):
     """Um item coletável no mapa. Guarda o tipo (ex: 'shield').
@@ -30,7 +42,6 @@ class Jogador(Sprite):
         self.vidas = assets['vidas_max']
 
         # receber dicionario de animacoes
-        # espera-se formato: {'right': [surf1, surf2, ...], 'left': [...]}
         self.animacoes = assets['animacoes_jogador']
         # --- novo: pré-calcula as versões invertidas verticalmente ---
         self.animacoes_invertidas = {}
@@ -67,15 +78,11 @@ class Jogador(Sprite):
         self.alvo_escada_x = None
         self.velocidade_subida = 120
 
-    # NOVO MÉTODO: Para TelaJogo alterar a gravidade
     def set_gravidade(self, nova_gravidade, nova_velocidade_y):
         self.gravidade_valor = nova_gravidade
         self.velocidade_y = nova_velocidade_y
-        # Opcional: Reseta a velocidade vertical e no_chao para evitar comportamentos estranhos na transição
         self.direcao.y = 0
         self.no_chao = False
-        # Mantemos frame_index — apenas ao atualizar, o código escolherá a versão invertida
-        # (nenhuma necessidade de recriar frames, pois já pré-calculamos)
 
     def reset_state(self):
         self.direcao.x = 0
@@ -105,7 +112,6 @@ class Jogador(Sprite):
             self.direcao_atual = 'right'
             self.movendo = True
         
-        # NOVO: Usa self.velocidade_y, que é dinâmica
         if keys[pygame.K_SPACE] and self.no_chao and not self.subindo_escada:
             self.direcao.y = self.velocidade_y
         
@@ -188,7 +194,7 @@ class Jogador(Sprite):
                         self.subindo_escada = False
                         self.alvo_escada_x = None
                         break
-        else: # NOVO: Aplica a gravidade dinâmica (self.gravidade_valor)
+        else:
             self.direcao.y += self.gravidade_valor * dt
             self.rect.y += int(self.direcao.y)
             self.collision('vertical')

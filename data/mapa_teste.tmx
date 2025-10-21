@@ -7,7 +7,7 @@
   <image source="../../../../Downloads/itemiconpack32.png" width="128" height="128"/>
  </tileset>
  <tileset firstgid="305" name=" Items" tilewidth="16" tileheight="16" tilecount="48" columns="6">
-  <image source="../../../../Downloads/RPG Items.png" width="96" height="143"/>
+  <image source="Items.png" width="96" height="143"/>
  </tileset>
  <layer id="2" name="Agua" width="50" height="25">
   <data encoding="csv">
