@@ -8,8 +8,8 @@ class TelaInicio:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                 return 'SAIR'
-            if event.key == pygame.K_m:
-                return 'MAPA'
+            if event.key == pygame.K_SPACE:
+                return 'JOGO'
             # if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
             #     return 'JOGO'  # pode ir direto pro jogo também
         return None

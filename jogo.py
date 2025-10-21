@@ -1,5 +1,4 @@
 from tela_inicio import TelaInicio
-from tela_mapa import TelaMapa
 from tela_jogo import TelaJogo
 from tela_vitoria import TelaVitoria
 from tela_gameover import TelaGameOver
@@ -57,7 +56,6 @@ class Jogo:
         self.assets = condicoes_iniciais()
         self.telas = {
             'INICIO': TelaInicio(self.window),
-            'MAPA': TelaMapa(self.window, self.assets),
             'JOGO': TelaJogo(self.window, self.assets),
             'VITORIA': TelaVitoria(self.window),
             'GAMEOVER': TelaGameOver(self.window)
