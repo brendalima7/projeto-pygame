@@ -50,6 +50,8 @@ class TelaJogo:
         player_data = None
         monster_data = [] 
 
+        limites_por_tipo = {}
+
         for objeto in tmx_mapa.get_layer_by_name('Entities'):
             
             obj_name = objeto.name
@@ -71,13 +73,22 @@ class TelaJogo:
                 # posico de spawn
                 spawn_pos = (x_scaled, y_scaled) 
                 
+                if obj_name not in limites_por_tipo:
+                    min_x_limite = x_scaled
+                    max_x_limite = x_scaled + width_scaled
+                    limites_patrulha_compartilhados = (min_x_limite, max_x_limite)
+                    limites_por_tipo[obj_name] = limites_patrulha_compartilhados
+                
+                # Recupera os limites para este monstro
+                limites_usados = limites_por_tipo[obj_name]
+
                 monster_data.append({
                     'name': obj_name,
                     'pos': spawn_pos,
-                    'limites': limites_patrulha
+                    'limites': limites_usados
                 })
 
-        # 2. INSTANCIA O JOGADOR
+        # instancia o jogador
         if player_data:
             player_pos, map_w, map_h = player_data
             self.spawn_point = player_pos
@@ -171,7 +182,6 @@ class TelaJogo:
             
         # checa colisão com a água
         estado_atual = 'JOGO'
-        
         if self.jogador:
             if pygame.sprite.spritecollideany(self.jogador, self.grupo_agua):
                 estado_atual = self.jogador_vivo()

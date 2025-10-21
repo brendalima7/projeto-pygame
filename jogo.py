@@ -40,7 +40,7 @@ def condicoes_iniciais():
         arquivo_base='assets/jogador_mapa', 
         direcoes=['left', 'right'],        
         num_frames=4                      
-    )
+    ) 
     assets['vidas_max'] = 5
     return assets
 
