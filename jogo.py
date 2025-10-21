@@ -22,18 +22,24 @@ def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
         animacoes[direction] = frames
     return animacoes
 
-def condicoes_iniciais(): 
+def condicoes_iniciais():  
     assets = {} 
     assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (100,100))
     assets['map_surface'] = pygame.image.load('assets/ground.png').convert_alpha()
     assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
     assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundoinvertido.png'), (3200,1600))
     assets['fonte'] = pygame.font.Font('assets/font/PressStart2P.ttf', 28)
-    # imagens de animacao 
+    # imagens de animacao jogador
     assets['animacoes_jogador'] = carrega_frames_animacao(
         arquivo_base='assets/jogador_mapa',
         direcoes=['down', 'up', 'left', 'right'],
         num_frames=4
+    )
+    # imagens de animacao monstro
+    assets['animacoes_monstro'] = carrega_frames_animacao(
+        arquivo_base='assets/jogador_mapa', 
+        direcoes=['left', 'right'],        
+        num_frames=4                      
     )
     assets['vidas_max'] = 5
     return assets

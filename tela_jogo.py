@@ -1,4 +1,3 @@
-# tela_jogo.py
 import pygame
 from pytmx.util_pygame import load_pygame
 from os.path import join
@@ -13,24 +12,25 @@ class TelaJogo:
 
         self.collision_sprites = pygame.sprite.Group()
         self.grupo_escadas = pygame.sprite.Group()
+        self.grupo_monstros = pygame.sprite.Group() 
         
         self.jogador = None
 
         self.spawn_point = None 
         self.grupo_agua = pygame.sprite.Group()
 
-        # NOVO: Variáveis para o ciclo de gravidade
+        # variaveis para o ciclo de gravidade
         self.gravidade_invertida = False
         self.tempo_inicio_estado = pygame.time.get_ticks() 
         self.intervalo_mudanca = tempo_mudanca_gravidade # Definido em constantes.py
         
-        # NOVO: Variável para rastrear a chave da imagem de fundo atual
+        # varivael para rastrear a chave da imagem de fundo atual
         self.fundo = 'fundo_mundonormal'
         
         # load game
         self.setup()
         
-        # Garante que o jogador já está com a gravidade e pulo iniciais
+        # garante que o jogador já está com a gravidade e pulo iniciais
         if self.jogador:
             self.jogador.set_gravidade(gravidade_normal, velocidade_y)
 
@@ -46,18 +46,63 @@ class TelaJogo:
             Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, (self.all_sprites, self.collision_sprites))
         for x, y, imagem in tmx_mapa.get_layer_by_name('Decoracao2').tiles():
             Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, self.all_sprites) 
-            
-        for objeto in tmx_mapa.get_layer_by_name('Entities'):
-            if objeto.name == 'Player':
-                player_pos = (objeto.x * SCALE_FACTOR , objeto.y * SCALE_FACTOR)
-                self.spawn_point = player_pos
-                self.jogador = Jogador(
-                    self.window, self.assets, player_pos,
-                    self.all_sprites, self.collision_sprites,
-                    map_pixel_width, map_pixel_height, 
-                    self.grupo_escadas
-                    )
+        
+        player_data = None
+        monster_data = [] 
 
+        for objeto in tmx_mapa.get_layer_by_name('Entities'):
+            
+            obj_name = objeto.name
+            
+            x_scaled = objeto.x * SCALE_FACTOR
+            y_scaled = objeto.y * SCALE_FACTOR
+            width_scaled = objeto.width * SCALE_FACTOR
+            
+            if obj_name == 'Player':
+                player_data = ((x_scaled, y_scaled), map_pixel_width, map_pixel_height)
+            
+            elif obj_name == 'Monstro': 
+                
+                # limite de patrulha
+                min_x_limite = x_scaled
+                max_x_limite = x_scaled + width_scaled
+                limites_patrulha = (min_x_limite, max_x_limite)
+                
+                # posico de spawn
+                spawn_pos = (x_scaled, y_scaled) 
+                
+                monster_data.append({
+                    'name': obj_name,
+                    'pos': spawn_pos,
+                    'limites': limites_patrulha
+                })
+
+        # 2. INSTANCIA O JOGADOR
+        if player_data:
+            player_pos, map_w, map_h = player_data
+            self.spawn_point = player_pos
+            self.jogador = Jogador(
+                self.window, self.assets, player_pos,
+                self.all_sprites, self.collision_sprites,
+                map_w, map_h, 
+                self.grupo_escadas
+            )
+
+        if self.jogador: # so instancia se o jogador foi criado
+            for data in monster_data:
+                monstro = Monstro(
+                    data['pos'], 
+                    (self.all_sprites, self.grupo_monstros), 
+                    self.assets, 
+                    self.collision_sprites, 
+                    data['limites'],
+                    self.jogador, 
+                    self.grupo_monstros
+                )
+                # garante que o monstro inicie com a gravidade correta
+                monstro.set_gravidade(gravidade_normal) 
+        
+        # O código para água e escada pode permanecer aqui, fora dos loops anteriores
         for x, y, imagem in tmx_mapa.get_layer_by_name('Agua').tiles():
             Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, (self.all_sprites, self.grupo_agua))
 
@@ -70,19 +115,16 @@ class TelaJogo:
         if self.jogador.vidas <= 0:
             return 'GAMEOVER'
         else:
-            # Reseta a posição do jogador para o ponto de spawn
+            # reseta a posição do jogador para o ponto de spawn
             self.jogador.rect.topleft = self.spawn_point
-            # Reseta o estado (velocidade, subindo escada, etc.)
+            # reseta o estado (velocidade, subindo escada, etc.)
             self.jogador.reset_state() 
-            # Garante que a gravidade é resetada para o estado atual do jogo após o respawn
+            # rarante que a gravidade é resetada para o estado atual do jogo após o respawn
             self.alternar_gravidade(force_state=self.gravidade_invertida) # Força o estado da gravidade atual
             return 'JOGO'
             
-    # NOVO MÉTODO: Controla a alternância de gravidade e fundo
+    # controla alternancia de  gravidade e fundo
     def alternar_gravidade(self, force_state=None):
-        """Alterna a gravidade, a velocidade de pulo do jogador e a imagem de fundo.
-           Pode forçar um estado específico com `force_state`."""
-        
         if force_state is None: # Se não forçar estado, alterna normalmente
             self.gravidade_invertida = not self.gravidade_invertida
         else: # Se forçar estado, define diretamente
@@ -99,8 +141,11 @@ class TelaJogo:
         
         if self.jogador:
             self.jogador.set_gravidade(nova_gravidade, novo_pulo)
+        
+        for monstro in self.grupo_monstros:
+            monstro.set_gravidade(nova_gravidade)
             
-        # Reseta o timer APENAS se não for um respawn forçado
+        # reseta o timer 
         if force_state is None:
             self.tempo_inicio_estado = pygame.time.get_ticks()
 
@@ -119,23 +164,51 @@ class TelaJogo:
     def update(self, dt):
         self.all_sprites.update(dt)
 
-        # NOVO: Checagem do Timer para alternar gravidade
+        # checa timer para alternar gravidade
         tempo_atual = pygame.time.get_ticks()
         if tempo_atual - self.tempo_inicio_estado >= self.intervalo_mudanca:
             self.alternar_gravidade() # Alterna sem forçar estado
             
         # checa colisão com a água
+        estado_atual = 'JOGO'
+        
         if self.jogador:
             if pygame.sprite.spritecollideany(self.jogador, self.grupo_agua):
-                return self.jogador_vivo()
-        return 'JOGO'
-    
+                estado_atual = self.jogador_vivo()
+                
+            # checa colisão com monstros
+            for monstro in pygame.sprite.spritecollide(self.jogador, self.grupo_monstros, False):
+                
+                # verifica se o jogador esta caindo na direcao da gravidade atual
+                is_landing = (self.jogador.gravidade_valor > 0 and self.jogador.direcao.y > 0) or \
+                             (self.jogador.gravidade_valor < 0 and self.jogador.direcao.y < 0)
+
+                # verifica pulo  para cima
+                if self.jogador.gravidade_valor > 0: # Gravidade normal: jogador.bottom colide com monstro.top
+                    hit_on_top = self.jogador.rect.bottom <= monstro.rect.top + 10
+                    if is_landing and hit_on_top:
+                        monstro.kill() # Monstro morre
+                        self.jogador.direcao.y = self.jogador.velocidade_y / 2 # Pequeno pulo de ricochete
+                        continue
+                else:
+                    hit_on_bottom = self.jogador.rect.top >= monstro.rect.bottom - 10
+                    if is_landing and hit_on_bottom:
+                        monstro.kill() # monstro morre
+                        self.jogador.direcao.y = self.jogador.velocidade_y / 2 # Pequeno pulo de ricochete
+                        continue
+                
+                # colisao de dano
+                estado_atual = self.jogador_vivo()
+                break 
+
+        return estado_atual
+        
     def draw(self):
         self.window.fill(COR_FUNDO)
-    
+        
         # usa custom_draw com a câmera seguindo o jogador
         if self.jogador:
-            # NOVO: Pega a imagem de fundo correta do assets e passa para o custom_draw
+            # pega a imagem de fundo correta do assets e passa para o custom_draw
             fundo_atual = self.assets[self.fundo]
             self.all_sprites.custom_draw(self.jogador, fundo_atual)
             

@@ -345,3 +345,144 @@ class Jogador(Sprite):
             self.animacao_timer = 0.0 
             
         self.image = self.animacoes[self.direcao_atual][self.frame_index]
+
+
+# ==============================================================================
+# NOVA CLASSE: Monstro
+# ==============================================================================
+class Monstro(Sprite):
+    def __init__(self, pos, groups, assets, collision_sprites, limites_patrulha, jogador_ref, grupo_monstros):
+        # A surf inicial não importa, será substituída pela animação
+        surf = pygame.Surface((32, 32)) 
+        super().__init__(pos, surf, groups)
+        
+        self.assets = assets
+        self.collision_sprites = collision_sprites
+        self.jogador_ref = jogador_ref # Referência ao objeto Jogador para perseguição
+        self.grupo_monstros = grupo_monstros
+        
+        # Animação e Imagem
+        self.animacoes = assets['animacoes_monstro'] # Assumindo que você carregará este asset
+        self.direcao_atual = 'right' 
+        self.movendo = True # Sempre em movimento, seja patrulhando ou perseguindo
+        self.frame_index = 0
+        self.animacao_timer = 0.0
+        self.VELOCIDADE_ANIMACAO = 0.15
+        self.image = self.animacoes[self.direcao_atual][self.frame_index]
+        self.rect = self.image.get_rect(topleft = pos)
+
+        # Movimento e Física (Aplica a mesma lógica de gravidade do jogador)
+        self.direcao = pygame.math.Vector2(1, 0) # Inicia indo para a direita
+        self.velocidade_patrulha = 100
+        self.velocidade_perseguicao = 150
+        self.velocidade = self.velocidade_patrulha 
+        self.gravidade_valor = gravidade_normal # Começa com gravidade normal
+        self.no_chao = False
+        
+        # IA: Patrulha e Perseguição
+        self.limites_patrulha = limites_patrulha # (min_x, max_x)
+        self.raio_de_visao = 400
+        self.modo_ia = 'patrulha' # 'patrulha' ou 'perseguição'
+
+    # Método para TelaJogo alterar a gravidade do monstro
+    def set_gravidade(self, nova_gravidade):
+        self.gravidade_valor = nova_gravidade
+        self.direcao.y = 0 # Zera a velocidade vertical ao mudar a gravidade para evitar bug
+
+    def aplicar_gravidade(self, dt):
+        # Aplica a gravidade e verifica colisão vertical (chão/teto)
+        self.direcao.y += self.gravidade_valor * dt
+        self.rect.y += int(self.direcao.y)
+        self.collision('vertical')
+
+    def collision(self, direcao):
+        for sprite in self.collision_sprites:
+            if sprite.rect.colliderect(self.rect):
+                if direcao == 'horizontal':
+                    if self.direcao.x > 0:
+                        self.rect.right = sprite.rect.left
+                        self.direcao.x *= -1 # Inverte a direção ao bater em um limite
+                    if self.direcao.x < 0:
+                        self.rect.left = sprite.rect.right
+                        self.direcao.x *= -1 # Inverte a direção ao bater em um limite
+                    
+                if direcao == 'vertical':
+                    is_falling = (self.gravidade_valor > 0 and self.direcao.y > 0) or \
+                                 (self.gravidade_valor < 0 and self.direcao.y < 0)
+
+                    if is_falling:
+                        if self.gravidade_valor > 0: # Gravidade Normal: Toca no topo do bloco (chão)
+                            self.rect.bottom = sprite.rect.top
+                        else: # Gravidade Negativa: Toca na base do bloco ("chão" ou teto)
+                            self.rect.top = sprite.rect.bottom
+                        
+                        self.direcao.y = 0
+                        self.no_chao = True
+                    else: # Está pulando/subindo (contra a gravidade)
+                        if self.gravidade_valor > 0: # Gravidade Normal: Bateu no teto
+                            self.rect.top = sprite.rect.bottom
+                        else: # Gravidade Negativa: Bateu no "teto"
+                            self.rect.bottom = sprite.rect.top
+                        
+                        self.direcao.y = 0
+
+    def ia_patrulha(self, dt):
+        # Inverte direção se atingir os limites de patrulha
+        if self.direcao.x > 0 and self.rect.right >= self.limites_patrulha[1]:
+            self.direcao.x = -1
+        elif self.direcao.x < 0 and self.rect.left <= self.limites_patrulha[0]:
+            self.direcao.x = 1
+
+        # Atualiza a direção visual para animação
+        self.direcao_atual = 'right' if self.direcao.x > 0 else 'left'
+
+    def ia_perseguicao(self, dt):
+        jogador_x = self.jogador_ref.rect.centerx
+        
+        # Movimento em direção ao jogador
+        if self.rect.centerx < jogador_x:
+            self.direcao.x = 1
+            self.direcao_atual = 'right'
+        elif self.rect.centerx > jogador_x:
+            self.direcao.x = -1
+            self.direcao_atual = 'left'
+        else:
+            self.direcao.x = 0 # Parado, caso esteja exatamente em cima
+
+    def verifica_modo_ia(self):
+        distancia = abs(self.rect.centerx - self.jogador_ref.rect.centerx)
+        
+        # Mude para modo perseguição se o jogador estiver dentro do raio de visão
+        if distancia <= self.raio_de_visao:
+            self.modo_ia = 'perseguição'
+            self.velocidade = self.velocidade_perseguicao
+        else:
+            self.modo_ia = 'patrulha'
+            self.velocidade = self.velocidade_patrulha
+
+    def update(self, dt):
+        self.verifica_modo_ia()
+
+        if self.modo_ia == 'patrulha':
+            self.ia_patrulha(dt)
+        else: # 'perseguição'
+            self.ia_perseguicao(dt)
+            
+        # Movimento Horizontal
+        self.rect.x += self.direcao.x * self.velocidade * dt
+        self.collision('horizontal')
+
+        # Aplica gravidade/movimento vertical
+        self.aplicar_gravidade(dt)
+        
+        # Animação
+        self.animacao_timer += dt
+        if self.animacao_timer >= self.VELOCIDADE_ANIMACAO:
+            self.animacao_timer = 0.0
+            num_frames = len(self.animacoes[self.direcao_atual])
+            self.frame_index = (self.frame_index + 1) % num_frames
+        
+        self.image = self.animacoes[self.direcao_atual][self.frame_index]
+        
+        # Se for um monstro que morre de alguma forma (ex: fora da tela), adicione a lógica aqui
+        # if self.rect.top > self.mundo_h: self.kill()
