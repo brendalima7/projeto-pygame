@@ -13,6 +13,7 @@ class TelaJogo:
         self.collision_sprites = pygame.sprite.Group()
         self.grupo_escadas = pygame.sprite.Group()
         self.grupo_monstros = pygame.sprite.Group() 
+        self.grupo_items = pygame.sprite.Group()
         
         self.jogador = None
 
@@ -26,6 +27,9 @@ class TelaJogo:
         
         # varivael para rastrear a chave da imagem de fundo atual
         self.fundo = 'fundo_mundonormal'
+        # inventario: lista de dicts {'tipo': str, 'image': Surface}
+        self.inventario = []
+        self.mostrar_inventario = False
         
         # load game
         self.setup()
@@ -122,11 +126,46 @@ class TelaJogo:
 
         for x, y, imagem in tmx_mapa.get_layer_by_name('Escada').tiles():
             Sprite((x*TILE_SIZE, y*TILE_SIZE), imagem, self.all_sprites, self.grupo_escadas) 
+        # Carrega itens da layer 'Items' (se existir) — espera tiles com gid e propriedades name
+        try:
+            layer_items = tmx_mapa.get_layer_by_name('Items')
+        except Exception:
+            layer_items = None
+
+        if layer_items:
+            for objeto in layer_items:
+                # objetos desta layer no TMX geralmente têm name e gid
+                nome = getattr(objeto, 'name', None)
+                gid = getattr(objeto, 'gid', None)
+                if gid is None:
+                    continue
+                # obtém a imagem do gid via pytmx
+                try:
+                    imagem = tmx_mapa.get_tile_image_by_gid(gid)
+                except Exception:
+                    imagem = None
+                if imagem is None:
+                    continue
+
+                x_scaled = objeto.x * SCALE_FACTOR
+                y_scaled = objeto.y * SCALE_FACTOR
+
+                # instancia Item (classe definida em sprites.py)
+                try:
+                    Item((x_scaled, y_scaled), imagem, nome, self.all_sprites, self.grupo_items)
+                except Exception:
+                    # fallback: usar Sprite se Item não estiver disponível
+                    Sprite((x_scaled, y_scaled), imagem, (self.all_sprites,))
             
     def jogador_vivo (self):
         self.jogador.vidas -= 1
         
         if self.jogador.vidas <= 0:
+            # limpa inventario ao morrer
+            try:
+                self.inventario.clear()
+            except Exception:
+                self.inventario = []
             return 'GAMEOVER'
         else:
             # reseta a posição do jogador para o ponto de spawn
@@ -168,6 +207,11 @@ class TelaJogo:
         if event.type == pygame.QUIT:
             return 'SAIR'
         if event.type == pygame.KEYDOWN:
+            # alterna inventario com I
+            if event.key == pygame.K_i:
+                # toggle inventario
+                self.mostrar_inventario = not self.mostrar_inventario
+                return None
             if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                 return 'SAIR'
             if event.key == pygame.K_a:
@@ -190,6 +234,22 @@ class TelaJogo:
         if self.jogador:
             if pygame.sprite.spritecollideany(self.jogador, self.grupo_agua):
                 estado_atual = self.jogador_vivo()
+
+            # checa coleta de itens: colisão por rect é suficiente aqui
+            itens_coletados = pygame.sprite.spritecollide(self.jogador, self.grupo_items, dokill=False)
+            for item in itens_coletados:
+                tipo = getattr(item, 'tipo', None)
+                # guarda no inventario (mantendo a imagem original para exibir)
+                try:
+                    # preserva cópia da imagem em escala atual
+                    imagem_item = item.image.copy()
+                except Exception:
+                    imagem_item = None
+
+                self.inventario.append({'tipo': tipo, 'image': imagem_item})
+
+                # remove o item do mapa
+                item.kill()
                 
         # checa colisão com monstros (pré-filtro por rect, depois mask)
         for monstro in self.grupo_monstros:
@@ -276,6 +336,44 @@ class TelaJogo:
                 # posição do texto tempo
                 pos_x = self.window.get_width() // 2 - img_tempo.get_width() // 2
                 self.window.blit(img_tempo, (pos_x, 10))
+            # desenha inventario se toggled
+            if self.mostrar_inventario:
+                # janela simples semi-transparente
+                inv_w, inv_h = 400, 200
+                inv_surf = pygame.Surface((inv_w, inv_h), pygame.SRCALPHA)
+                inv_surf.fill((0, 0, 0, 180))
+                inv_x = self.window.get_width()//2 - inv_w//2
+                inv_y = self.window.get_height()//2 - inv_h//2
+                # desenha título
+                titulo = self.assets['fonte2'].render('INVENTARIO', True, (255,255,255))
+                inv_surf.blit(titulo, (10, 10))
+
+                # desenha thumbnails
+                padding = 10
+                thumb_size = 48
+                x = padding
+                y = 40
+                for entry in self.inventario:
+                    img = entry.get('image')
+                    if img:
+                        # redimensiona para thumb_size mantendo proporção
+                        try:
+                            thumb = pygame.transform.scale(img, (thumb_size, thumb_size))
+                        except Exception:
+                            thumb = pygame.Surface((thumb_size, thumb_size))
+                            thumb.fill((100,100,100))
+                    else:
+                        thumb = pygame.Surface((thumb_size, thumb_size))
+                        thumb.fill((100,100,100))
+
+                    inv_surf.blit(thumb, (x, y))
+                    x += thumb_size + padding
+                    if x + thumb_size + padding > inv_w:
+                        x = padding
+                        y += thumb_size + padding
+
+                # blit janela completa na janela principal
+                self.window.blit(inv_surf, (inv_x, inv_y))
             
         else:
             self.all_sprites.draw(self.window)
@@ -293,6 +391,12 @@ class TelaJogo:
         self.grupo_escadas.empty()
         self.grupo_monstros.empty()
         self.grupo_agua.empty()
+        self.grupo_items.empty()
+        # limpa inventario também no restart
+        try:
+            self.inventario.clear()
+        except Exception:
+            self.inventario = []
 
         # opcional: zera variáveis de controle de tempo/gravidade
         self.tempo_inicio_estado = None

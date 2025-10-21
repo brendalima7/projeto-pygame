@@ -6,6 +6,16 @@ class Sprite(pygame.sprite.Sprite):
         self.image = pygame.transform.scale_by(surf, SCALE_FACTOR)
         self.rect = self.image.get_rect(topleft = pos)
 
+
+class Item(Sprite):
+    """Um item coletável no mapa. Guarda o tipo (ex: 'shield').
+       Herdamos de Sprite para reaproveitar o scaling e o rect/topleft.
+    """
+    def __init__(self, pos, surf, tipo, *groups):
+        # surf deve ser uma Surface (normalmente obtida via pytmx)
+        super().__init__(pos, surf, *groups)
+        self.tipo = tipo
+
 class Jogador(Sprite):
     def __init__(self, window, assets, pos, groups, collision_sprites, mundo_w, mundo_h, grupo_escadas):
         surf = pygame.Surface((10,10)) # O surf inicial não importa muito, pois a imagem é substituída

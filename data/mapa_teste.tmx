@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="62">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="78">
  <tileset firstgid="1" source="ColorfulAdventureAutotile.tsx"/>
  <tileset firstgid="57" source="sheet.tsx"/>
  <tileset firstgid="193" source="ColorfulAdventureAccesories.tsx"/>
+ <tileset firstgid="241" name="items" tilewidth="16" tileheight="16" tilecount="64" columns="8">
+  <image source="../../../../Downloads/itemiconpack32.png" width="128" height="128"/>
+ </tileset>
+ <tileset firstgid="305" name=" Items" tilewidth="16" tileheight="16" tilecount="48" columns="6">
+  <image source="../../../../Downloads/RPG Items.png" width="96" height="143"/>
+ </tileset>
  <layer id="2" name="Agua" width="50" height="25">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1073741974,1073741974,1073741974,1073741974,1073741974,1073741974,0,0,167,167,167,167,167,167,167,0,0,0,0,
@@ -91,51 +97,58 @@
 </data>
  </layer>
  <objectgroup id="9" name="Entities">
-  <object id="1" name="Player" x="66.8333" y="270.5">
+  <object id="1" name="Player" x="59.8333" y="285.5">
    <point/>
   </object>
   <object id="24" name="Monstro" x="48.1818" y="80" width="64" height="16.1818"/>
   <object id="25" name="Monstro" x="544" y="144.125" width="63.875" height="16.125"/>
-  <object id="26" name="Monstro" x="608.5" y="367.75" width="143.75" height="15.5"/>
-  <object id="47" name="Monstro" x="54.7273" y="91.6364">
+  <object id="26" name="Monstro" x="607" y="366.75" width="143.75" height="15.5"/>
+  <object id="47" name="Monstro" x="551.727" y="32.1364">
    <point/>
   </object>
-  <object id="48" name="Monstro " x="70.5455" y="91.0909">
+  <object id="48" name="Monstro " x="232.545" y="46.5909">
    <point/>
   </object>
-  <object id="49" name="Monstro" x="88.1818" y="91.2727">
+  <object id="49" name="Monstro" x="166.682" y="282.773">
    <point/>
   </object>
-  <object id="50" name="Monstro" x="106.727" y="91.4545">
+  <object id="50" name="Monstro" x="185.227" y="124.455">
    <point/>
   </object>
-  <object id="52" name="Monstro" x="551.545" y="151.182">
+  <object id="52" name="Monstro" x="430.045" y="175.682">
    <point/>
   </object>
-  <object id="53" name="Monstro" x="568.182" y="151">
+  <object id="53" name="Monstro" x="271.682" y="128">
    <point/>
   </object>
-  <object id="54" name="Monstro" x="586.091" y="152.273">
+  <object id="54" name="Monstro" x="785.091" y="287.773">
    <point/>
   </object>
-  <object id="55" name="Monstro" x="604.273" y="153">
+  <object id="55" name="Monstro" x="398.773" y="349.5">
    <point/>
   </object>
-  <object id="56" name="Monstro" x="621.5" y="378.5">
+  <object id="56" name="Monstro" x="310.5" y="177">
    <point/>
   </object>
-  <object id="57" name="Monstro" x="664.5" y="379">
+  <object id="57" name="Monstro" x="471" y="367.5">
    <point/>
   </object>
-  <object id="58" name="Monstro" x="695" y="377.5">
+  <object id="58" name="Monstro" x="567" y="304.5">
    <point/>
   </object>
-  <object id="59" name="Monstro" x="642.5" y="378.5">
+  <object id="60" name="Monstro" x="782" y="365.5">
    <point/>
   </object>
-  <object id="60" name="Monstro" x="723.5" y="377">
+  <object id="62" x="504.5" y="252.5">
    <point/>
   </object>
+ </objectgroup>
+ <objectgroup id="12" name="Items">
+  <object id="70" name="shield" gid="325" x="207" y="92.5" width="16" height="16"/>
+  <object id="71" name="shield" gid="331" x="384" y="170.5" width="16" height="16"/>
+  <object id="72" name="shield" gid="319" x="448" y="75" width="16" height="16"/>
+  <object id="73" name="shield" gid="337" x="639" y="159.5" width="16" height="16"/>
+  <object id="74" name="shield" gid="343" x="737" y="383" width="16" height="16"/>
  </objectgroup>
  <layer id="1" name="Principal" width="50" height="25">
   <data encoding="csv">
