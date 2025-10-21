@@ -78,9 +78,26 @@ class Jogo:
                 tela_ativa = self.telas[self.tela_atual]
                 if hasattr(tela_ativa, 'handle_event'):
                     resultado = tela_ativa.handle_event(event)
+
+                    # Tratamento especial para RESTART vindo da TelaGameOver
+                    if resultado == 'RESTART':
+                        # faz hard restart do nível e volta para a tela de jogo
+                        # garante que TelaJogo possui restart()
+                        if hasattr(self.telas['JOGO'], 'restart'):
+                            self.telas['JOGO'].restart()
+                        else:
+                            # fallback para recriar via setup() caso não exista restart()
+                            self.telas['JOGO'].setup()
+                        # iniciar o timer de gravidade e alternar para JOGO
+                        self.telas['JOGO'].iniciar_tempo_gravidade()
+                        self.tela_atual = 'JOGO'
+                        # pula tratamento normal abaixo
+                        continue
+
                     if resultado == 'SAIR':
                         self.rodando = False
                     elif resultado and resultado in self.telas:
+                        # se for voltar para JOGO via outra tela (ex: INICIO -> JOGO)
                         if resultado == 'JOGO':
                             self.telas['JOGO'].iniciar_tempo_gravidade()
                         self.tela_atual = resultado

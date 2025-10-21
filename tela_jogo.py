@@ -184,39 +184,46 @@ class TelaJogo:
             tempo_atual = pygame.time.get_ticks()
             if tempo_atual - self.tempo_inicio_estado >= self.intervalo_mudanca:
                 self.alternar_gravidade() 
-            
+                
         # checa colisão com a água
         estado_atual = 'JOGO'
         if self.jogador:
             if pygame.sprite.spritecollideany(self.jogador, self.grupo_agua):
                 estado_atual = self.jogador_vivo()
                 
-            # checa colisão com monstros
-            for monstro in pygame.sprite.spritecollide(self.jogador, self.grupo_monstros, False):
-                
-                # verifica se o jogador esta caindo na direcao da gravidade atual
-                is_landing = (self.jogador.gravidade_valor > 0 and self.jogador.direcao.y > 0) or \
-                             (self.jogador.gravidade_valor < 0 and self.jogador.direcao.y < 0)
+            # checa colisão com monstros (uso de prev_rect para detectar crossing/landing)
+                    # checa colisão com monstros (usando mask pixel-perfect)
+        for monstro in self.grupo_monstros:
+            # Verifica colisão de máscaras
+            if pygame.sprite.collide_mask(self.jogador, monstro):
+                prev = getattr(self.jogador, 'prev_rect', self.jogador.rect)
 
-                # verifica pulo  para cima
-                if self.jogador.gravidade_valor > 0: # Gravidade normal: jogador.bottom colide com monstro.top
-                    hit_on_top = self.jogador.rect.bottom <= monstro.rect.top + 10
-                    if is_landing and hit_on_top:
-                        monstro.kill() # Monstro morre
-                        self.jogador.direcao.y = self.jogador.velocidade_y / 2 # Pequeno pulo de ricochete
-                        continue
+                # parâmetros
+                LAND_TOLERANCE = 10
+                HORIZ_ALIGN_FACTOR = 0.6
+
+                largura_rel = max(monstro.rect.width, self.jogador.rect.width)
+                alinhado_horizontal = abs(self.jogador.rect.centerx - monstro.rect.centerx) <= largura_rel * HORIZ_ALIGN_FACTOR
+
+                if self.jogador.gravidade_valor > 0:
+                    # Gravidade normal: jogador vem de cima
+                    came_from_above = prev.bottom <= monstro.rect.top
+                    now_overlaps = self.jogador.rect.bottom >= monstro.rect.top - LAND_TOLERANCE
+                    moving_towards = self.jogador.direcao.y > 0
+                    is_landing = came_from_above and now_overlaps and moving_towards and alinhado_horizontal
                 else:
-                    hit_on_bottom = self.jogador.rect.top >= monstro.rect.bottom - 10
-                    if is_landing and hit_on_bottom:
-                        monstro.kill() # monstro morre
-                        self.jogador.direcao.y = self.jogador.velocidade_y / 2 # Pequeno pulo de ricochete
-                        continue
-                
-                # colisao de dano
-                estado_atual = self.jogador_vivo()
-                break 
+                    # Gravidade invertida: jogador vem de baixo
+                    came_from_below = prev.top >= monstro.rect.bottom
+                    now_overlaps = self.jogador.rect.top <= monstro.rect.bottom + LAND_TOLERANCE
+                    moving_towards = self.jogador.direcao.y < 0
+                    is_landing = came_from_below and now_overlaps and moving_towards and alinhado_horizontal
+
+                if is_landing:
+                    monstro.kill()
+
 
         return estado_atual
+
         
     def draw(self):
         self.window.fill(COR_FUNDO)
@@ -227,7 +234,7 @@ class TelaJogo:
             fundo_atual = self.assets[self.fundo]
             self.all_sprites.custom_draw(self.jogador, fundo_atual)
             
-            # desenha vidas (coração)
+            # desenha vidas 
             vidas_restantes = self.jogador.vidas
             texto_coracoes = chr(9829) * vidas_restantes
             img_cor = self.assets['fonte'].render(texto_coracoes, True, (255, 0, 0)) 
@@ -246,3 +253,35 @@ class TelaJogo:
             
         else:
             self.all_sprites.draw(self.window)
+    
+    def restart(self):
+        # limpa grupos antigos (se existirem)
+        try:
+            if hasattr(self, 'all_sprites'):
+                self.all_sprites.empty()
+        except Exception:
+            pass
+
+        # grupos que criamos em setup()
+        self.collision_sprites.empty()
+        self.grupo_escadas.empty()
+        self.grupo_monstros.empty()
+        self.grupo_agua.empty()
+
+        # opcional: zera variáveis de controle de tempo/gravidade
+        self.tempo_inicio_estado = None
+        self.gravidade_invertida = False
+        self.fundo = 'fundo_mundonormal'
+
+        # chama setup() para recriar mapa, sprites, jogador e monstros
+        self.setup()
+
+        # garante que o jogador criado em setup() comece com valores padrão
+        if self.jogador:
+            self.jogador.vidas = self.assets.get('vidas_max', self.jogador.vidas)
+            self.jogador.set_gravidade(gravidade_normal, velocidade_y)
+            # posiciona no spawn (setup já define spawn_point e jogador)
+            self.jogador.rect.topleft = self.spawn_point
+
+        # reinicia timer de gravidade (se desejar começar o ciclo imediatamente)
+        self.iniciar_tempo_gravidade()  

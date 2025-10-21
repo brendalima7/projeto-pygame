@@ -251,11 +251,15 @@ class Jogador(Sprite):
                 self.no_chao = True
 
     def update(self, dt):
+        
+        self.prev_rect = self.rect.copy()
+
+        # comportamento normal do jogador (input, física, limites)
         self.input()
         self.move(dt)
         self.limitar_mundo()
 
-        # --- animação ---
+        # animacao
         if self.movendo:
             self.animacao_timer += dt
             if self.animacao_timer >= self.VELOCIDADE_ANIMACAO:
@@ -269,7 +273,7 @@ class Jogador(Sprite):
         else:
             self.frame_index = 0
             self.animacao_timer = 0.0 
-            
+                
         # escolhe frames correto no momento de desenhar a imagem
         if self.gravidade_valor < 0:
             frames_list = self.animacoes_invertidas[self.direcao_atual]
@@ -288,51 +292,117 @@ class Jogador(Sprite):
         # Se você usa colisão por máscara, atualize a mask aqui:
         # self.mask = pygame.mask.from_surface(self.image)
 
-
 class Monstro(Sprite):
-    def __init__(self, pos, groups, assets, collision_sprites, limites_patrulha, jogador_ref, grupo_monstros):
-        # a surf inicial nao importa, sera substituida pela animacao
+    def __init__(self, pos, groups, assets, collision_sprites, limites_patrulha, jogador_ref, grupo_monstros, water_sprites=None):
         surf = pygame.Surface((32, 32)) 
         super().__init__(pos, surf, groups)
         
         self.assets = assets
         self.collision_sprites = collision_sprites
-        self.jogador_ref = jogador_ref # referencia ao objeto jogador para perseguicao
+        self.jogador_ref = jogador_ref
         self.grupo_monstros = grupo_monstros
-        
-        # animacao e imagem
-        self.animacoes = assets['animacoes_monstro'] # assumindo que voce carregara este asset
+
+        # water_sprites pode ser None, um pygame.sprite.Group, ou uma lista de sprites/rects
+        self.water_sprites = water_sprites
+
+        # animações (pré-invertidas como você já fez antes, se quiser)
+        self.animacoes = assets['animacoes_monstro']
+        self.animacoes_invertidas = {}
+        for key, frames in self.animacoes.items():
+            self.animacoes_invertidas[key] = [pygame.transform.flip(f, False, True) for f in frames]
+
         self.direcao_atual = 'right' 
-        self.movendo = True # sempre em movimento, seja patrulhando ou perseguindo
+        self.movendo = True
         self.frame_index = 0
         self.animacao_timer = 0.0
         self.VELOCIDADE_ANIMACAO = 0.15
         self.image = self.animacoes[self.direcao_atual][self.frame_index]
         self.rect = self.image.get_rect(topleft = pos)
 
-        # movimento e fisica (aplica a mesma logica de gravidade do jogador)
-        self.direcao = pygame.math.Vector2(1, 0) # inicia indo para a direita
+        self.direcao = pygame.math.Vector2(1, 0)
         self.velocidade_patrulha = 50
         self.velocidade_perseguicao = 50
         self.velocidade = self.velocidade_patrulha 
-        self.gravidade_valor = gravidade_normal # comeca com gravidade normal
+        self.gravidade_valor = gravidade_normal
         self.no_chao = False
-        
-        # ia: patrulha e persecucao
-        self.limites_patrulha = limites_patrulha # (min_x, max_x)
-        self.raio_de_visao = 400
-        self.modo_ia = 'patrulha' # 'patrulha' ou 'perseguicao'
 
-    # metodo para telajogo alterar a gravidade do monstro
+        self.limites_patrulha = limites_patrulha
+        self.raio_de_visao = 400
+        self.modo_ia = 'patrulha'
+
     def set_gravidade(self, nova_gravidade):
         self.gravidade_valor = nova_gravidade
-        self.direcao.y = 0 # zera a velocidade vertical ao mudar a gravidade
+        self.direcao.y = 0
 
     def aplicar_gravidade(self, dt):
-        # aplica a gravidade e verifica colisao vertical
+        # Antes de aplicar, guarda a posição anterior para possível rollback
+        old_rect = self.rect.copy()
         self.direcao.y += self.gravidade_valor * dt
         self.rect.y += int(self.direcao.y)
         self.collision('vertical')
+
+        # Se acabou dentro de água, volta e zera velocidade vertical (não permite cair na água)
+        if self._collide_with_water():
+            self.rect = old_rect
+            self.direcao.y = 0
+            self.no_chao = True
+
+    def _collide_with_water(self):
+        """Retorna True se o rect do monstro colidir com qualquer water_rect.
+           Aceita self.water_sprites sendo None, Group, list de sprites, ou list de rects.
+        """
+        if not self.water_sprites:
+            return False
+        # group de sprites
+        if isinstance(self.water_sprites, pygame.sprite.Group):
+            return pygame.sprite.spritecollideany(self, self.water_sprites) is not None
+        # lista/iterável de sprites ou rects
+        for w in self.water_sprites:
+            if hasattr(w, 'rect'):
+                if self.rect.colliderect(w.rect):
+                    return True
+            elif isinstance(w, pygame.Rect):
+                if self.rect.colliderect(w):
+                    return True
+        return False
+
+    def _probe_agua_a_frente(self, px_a_frente=4, probe_height=4):
+        """Retorna True se ao andar px_a_frente na direção X atual o pé do monstro cairia em água.
+           Usa uma pequena caixa (probe) na borda inferior na direção do movimento.
+        """
+        if not self.water_sprites:
+            return False
+        # determina onde fica 'pé' dependendo da gravidade
+        if self.gravidade_valor > 0:
+            # gravidade normal: pé é bottom
+            probe_rect = pygame.Rect(0,0, self.rect.width, probe_height)
+            if self.direcao.x > 0:
+                probe_rect.topleft = (self.rect.right + px_a_frente, self.rect.bottom)
+            elif self.direcao.x < 0:
+                probe_rect.topright = (self.rect.left - px_a_frente, self.rect.bottom)
+            else:
+                return False
+        else:
+            # gravidade invertida: 'pé' é top
+            probe_rect = pygame.Rect(0,0, self.rect.width, probe_height)
+            if self.direcao.x > 0:
+                probe_rect.bottomleft = (self.rect.right + px_a_frente, self.rect.top)
+            elif self.direcao.x < 0:
+                probe_rect.bottomright = (self.rect.left - px_a_frente, self.rect.top)
+            else:
+                return False
+
+        # checa colisão do probe com water_sprites
+        if isinstance(self.water_sprites, pygame.sprite.Group):
+            for w in self.water_sprites:
+                if probe_rect.colliderect(w.rect):
+                    return True
+        else:
+            for w in self.water_sprites:
+                wrect = w.rect if hasattr(w, 'rect') else w
+                if probe_rect.colliderect(wrect):
+                    return True
+        return False
 
     def collision(self, direcao):
         for sprite in self.collision_sprites:
@@ -340,52 +410,41 @@ class Monstro(Sprite):
                 if direcao == 'horizontal':
                     if self.direcao.x > 0:
                         self.rect.right = sprite.rect.left
-                        self.direcao.x *= -1 # inverte a direcao ao bater em um limite
+                        self.direcao.x *= -1
                     if self.direcao.x < 0:
                         self.rect.left = sprite.rect.right
-                        self.direcao.x *= -1 # inverte a direcao ao bater em um limite
-                    
+                        self.direcao.x *= -1
+                        
                 if direcao == 'vertical':
-                    # verifica se esta caindo (na direcao da gravidade)
                     is_falling = (self.gravidade_valor > 0 and self.direcao.y > 0) or \
                                  (self.gravidade_valor < 0 and self.direcao.y < 0)
 
                     if is_falling:
-                        # colisao com o chao / superficie
-                        if self.gravidade_valor > 0: # gravidade normal
+                        if self.gravidade_valor > 0:
                             self.rect.bottom = sprite.rect.top
-                        else: # gravidade negativa
+                        else:
                             self.rect.top = sprite.rect.bottom
-                        
                         self.direcao.y = 0
                         self.no_chao = True
-                    else: 
-                        # colisao com o teto / indo contra a gravidade
+                    else:
                         is_jumping = (self.gravidade_valor > 0 and self.direcao.y < 0) or \
                                      (self.gravidade_valor < 0 and self.direcao.y > 0)
-                                     
                         if is_jumping:
-                            if self.gravidade_valor > 0: # gravidade normal
+                            if self.gravidade_valor > 0:
                                 self.rect.top = sprite.rect.bottom
-                            else: # gravidade negativa
+                            else:
                                 self.rect.bottom = sprite.rect.top
-                            
-                            self.direcao.y = 0 # zera velocidade vertical
+                            self.direcao.y = 0
 
     def ia_patrulha(self, dt):
-        # inverte direcao se atingir os limites de patrulha
         if self.direcao.x > 0 and self.rect.right >= self.limites_patrulha[1]:
             self.direcao.x = -1
         elif self.direcao.x < 0 and self.rect.left <= self.limites_patrulha[0]:
             self.direcao.x = 1
-
-        # atualiza a direcao visual para animacao
         self.direcao_atual = 'right' if self.direcao.x > 0 else 'left'
 
     def ia_perseguicao(self, dt):
         jogador_x = self.jogador_ref.rect.centerx
-        
-        # movimento em direcao ao jogador
         if self.rect.centerx < jogador_x:
             self.direcao.x = 1
             self.direcao_atual = 'right'
@@ -393,14 +452,12 @@ class Monstro(Sprite):
             self.direcao.x = -1
             self.direcao_atual = 'left'
         else:
-            self.direcao.x = 0 # parado, caso esteja exatamente em cima
+            self.direcao.x = 0
 
     def verifica_modo_ia(self):
         distancia = abs(self.rect.centerx - self.jogador_ref.rect.centerx)
-        
-        # mude para modo perseguicao se o jogador estiver dentro do raio de visao
         if distancia <= self.raio_de_visao:
-            self.modo_ia = 'perseguição'
+            self.modo_ia = 'perseguicao'
             self.velocidade = self.velocidade_perseguicao
         else:
             self.modo_ia = 'patrulha'
@@ -411,24 +468,45 @@ class Monstro(Sprite):
 
         if self.modo_ia == 'patrulha':
             self.ia_patrulha(dt)
-        else: # 'perseguicao'
+        else:
             self.ia_perseguicao(dt)
             
-        # movimento horizontal
-        self.rect.x += self.direcao.x * self.velocidade * dt
-        self.collision('horizontal')
+        # --- Pre-probe: evita andar se tem água à frente ---
+        if self._probe_agua_a_frente(px_a_frente=4, probe_height=6):
+            # em vez de andar para a água, inverter direção
+            self.direcao.x *= -1
+        else:
+            # movimento horizontal normal: guarda old_rect para rollback caso entre em água
+            old_rect = self.rect.copy()
+            self.rect.x += self.direcao.x * self.velocidade * dt
+            self.collision('horizontal')
+
+            # se após mover o monstro estiver colidindo com água, reverte e inverte direção
+            if self._collide_with_water():
+                self.rect = old_rect
+                self.direcao.x *= -1
 
         # aplica gravidade/movimento vertical
         self.aplicar_gravidade(dt)
         
-        # animacao
+        # animacao (mantendo inversão como antes)
         self.animacao_timer += dt
         if self.animacao_timer >= self.VELOCIDADE_ANIMACAO:
             self.animacao_timer = 0.0
-            num_frames = len(self.animacoes[self.direcao_atual])
+            if self.gravidade_valor < 0:
+                num_frames = len(self.animacoes_invertidas[self.direcao_atual])
+            else:
+                num_frames = len(self.animacoes[self.direcao_atual])
             self.frame_index = (self.frame_index + 1) % num_frames
-        
-        self.image = self.animacoes[self.direcao_atual][self.frame_index]
-        
-        # se for um monstro que morre de alguma forma, adicione a logica aqui
-        # if self.rect.top > self.mundo_h: self.kill()
+
+        if self.gravidade_valor < 0:
+            frames_list = self.animacoes_invertidas[self.direcao_atual]
+        else:
+            frames_list = self.animacoes[self.direcao_atual]
+
+        if self.frame_index >= len(frames_list):
+            self.frame_index = 0
+
+        old_center = self.rect.center
+        self.image = frames_list[self.frame_index]
+        self.rect = self.image.get_rect(center=old_center)
