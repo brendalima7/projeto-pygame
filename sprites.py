@@ -111,14 +111,29 @@ class Jogador(Sprite):
             self.direcao.x = 1
             self.direcao_atual = 'right'
             self.movendo = True
-        
+
         if keys[pygame.K_SPACE] and self.no_chao and not self.subindo_escada:
             self.direcao.y = self.velocidade_y
-        
+
+        # marcar intenção de subir/descer escada
         if keys[pygame.K_UP]:
             self.subir_tecla = True
         if keys[pygame.K_DOWN]:
             self.descer_tecla = True
+
+        # Permitir sair da escada a qualquer momento
+        # Se estiver subindo escada e o jogador pressionar esquerda/direita, sair da escada
+        if self.subindo_escada and (keys[pygame.K_LEFT] or keys[pygame.K_a] or keys[pygame.K_RIGHT] or keys[pygame.K_d]):
+            self.subindo_escada = False
+            self.alvo_escada_x = None
+            # direcao.x já foi ajustada acima conforme a tecla pressionada
+            self.movendo = True
+
+        # Se estiver subindo escada e pressionar pular (SPACE), sai da escada e aplica pulo
+        if self.subindo_escada and keys[pygame.K_SPACE]:
+            self.subindo_escada = False
+            self.alvo_escada_x = None
+            self.direcao.y = self.velocidade_y
     
     def verificar_tocando_escada(self):
         if not self.grupo_escadas:
@@ -287,9 +302,7 @@ class Jogador(Sprite):
                 self.frame_index = (self.frame_index + 1) % num_frames
         else:
             self.frame_index = 0
-            self.animacao_timer = 0.0 
-                
-        # escolhe frames correto no momento de desenhar a imagem
+            self.animacao_timer = 0.0
         if self.gravidade_valor < 0:
             frames_list = self.animacoes_invertidas[self.direcao_atual]
         else:
