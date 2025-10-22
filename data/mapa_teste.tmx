@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="78">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="50" height="25" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="82">
  <tileset firstgid="1" source="ColorfulAdventureAutotile.tsx"/>
  <tileset firstgid="57" source="sheet.tsx"/>
  <tileset firstgid="193" source="ColorfulAdventureAccesories.tsx"/>
- <tileset firstgid="305" name=" Items" tilewidth="16" tileheight="16" tilecount="48" columns="6">
+ <tileset firstgid="241" name=" Items" tilewidth="16" tileheight="16" tilecount="48" columns="6">
   <image source="Items.png" width="96" height="143"/>
  </tileset>
  <layer id="2" name="Agua" width="50" height="25">
@@ -88,7 +88,7 @@
 0,0,0,0,0,195,202,214,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,215,0,0,0,0,0,193,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,216,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,88,0,0,0,0,0,0,0,0,0,0,0,0,88,0,0,0,0,0,0,0,0,195,0,0,0,
-0,0,0,0,0,0,193,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,213,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,193,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,213,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,141,
 0,0,0,0,0,0,0,0,196,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,203,195,202,202,202,202,204,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
@@ -133,19 +133,17 @@
   <object id="58" name="Monstro" x="567" y="304.5">
    <point/>
   </object>
-  <object id="60" name="Monstro" x="782" y="365.5">
-   <point/>
-  </object>
   <object id="62" x="504.5" y="252.5">
    <point/>
   </object>
+  <object id="79" name="final" gid="141" x="783.818" y="367.818" width="16" height="16"/>
  </objectgroup>
  <objectgroup id="12" name="Items">
-  <object id="70" name="shield" gid="325" x="207" y="92.5" width="16" height="16"/>
-  <object id="71" name="shield" gid="331" x="384" y="170.5" width="16" height="16"/>
-  <object id="72" name="shield" gid="319" x="448" y="75" width="16" height="16"/>
-  <object id="73" name="shield" gid="337" x="639" y="159.5" width="16" height="16"/>
-  <object id="74" name="shield" gid="343" x="737" y="383" width="16" height="16"/>
+  <object id="70" name="shield" gid="261" x="207" y="92.5" width="16" height="16"/>
+  <object id="71" name="shield" gid="267" x="384" y="170.5" width="16" height="16"/>
+  <object id="72" name="shield" gid="255" x="448" y="75" width="16" height="16"/>
+  <object id="73" name="shield" gid="273" x="639" y="159.5" width="16" height="16"/>
+  <object id="74" name="shield" gid="279" x="737" y="383" width="16" height="16"/>
  </objectgroup>
  <layer id="1" name="Principal" width="50" height="25">
   <data encoding="csv">

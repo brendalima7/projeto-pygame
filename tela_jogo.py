@@ -59,6 +59,7 @@ class TelaJogo:
         
         player_data = None
         monster_data = [] 
+        self.final_pos = None  # Armazena a posição do objeto final
 
         limites_por_tipo = {}
 
@@ -72,6 +73,12 @@ class TelaJogo:
             
             if obj_name == 'Player':
                 player_data = ((x_scaled, y_scaled), map_pixel_width, map_pixel_height)
+            
+            elif obj_name == 'final':
+                # Obtém a imagem do tile através do gid do objeto
+                tile_img = tmx_mapa.get_tile_image_by_gid(objeto.gid)
+                if tile_img:  # Se a imagem foi encontrada
+                    self.final_pos = Sprite((x_scaled, y_scaled), tile_img, self.all_sprites)
             
             elif obj_name == 'Monstro': 
                 
@@ -225,6 +232,11 @@ class TelaJogo:
         # checa colisão com a água
         estado_atual = 'JOGO'
         if self.jogador:
+            # Verifica colisão com o objeto final
+            if self.final_pos and self.shields_coletados >= 5:
+                if pygame.sprite.collide_rect(self.jogador, self.final_pos):
+                    return 'VITORIA'
+                    
             if pygame.sprite.spritecollideany(self.jogador, self.grupo_agua):
                 estado_atual = self.jogador_vivo()
 
