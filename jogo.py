@@ -1,11 +1,12 @@
+import pygame
 from tela_inicio import TelaInicio
 from tela_jogo import TelaJogo
 from tela_vitoria import TelaVitoria
 from tela_gameover import TelaGameOver
+from tela_input_nome import TelaInputNome 
+from tela_ranking import TelaRanking      
 from constantes import *
 import os
-
-tela_atual = 'INICIO' 
 
 # carrega os frames de animacao
 def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
@@ -21,7 +22,7 @@ def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
         animacoes[direction] = frames
     return animacoes
 
-def condicoes_iniciais():  
+def condicoes_iniciais(): 
     assets = {} 
     assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (100,100))
     assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
@@ -82,24 +83,27 @@ class Jogo:
 
         self.assets = condicoes_iniciais()
 
-        # Carrega e inicia a música de fundo
+        self.nome_jogador = "" # Variável para armazenar o nome
+        
+        # Carrega e inicia a musica de fundo
         caminho_musica = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'matue.mp3')
-        # armazena o caminho do tema para poder restaurá-lo depois
         self.theme_music_path = caminho_musica if os.path.exists(caminho_musica) else None
         if self.theme_music_path:
             pygame.mixer.music.load(self.theme_music_path)
-            pygame.mixer.music.set_volume(0.5)  # Ajusta o volume para 50%
-            pygame.mixer.music.play(-1)  # -1 faz a música tocar em loop infinito
+            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.play(-1)
 
         self.telas = {
+            'INPUT_NOME': TelaInputNome(self.window, self.assets),
             'INICIO': TelaInicio(self.window,self.assets),
             'JOGO': TelaJogo(self.window, self.assets),
-            'VITORIA': TelaVitoria(self.window),
-            'GAMEOVER': TelaGameOver(self.window,self.assets)
+            'VITORIA': TelaVitoria(self.window, self.assets),
+            'GAMEOVER': TelaGameOver(self.window,self.assets),
+            'RANKING': TelaRanking(self.window, self.assets)
         }
 
         # define a tela inicial
-        self.tela_atual = tela_atual
+        self.tela_atual = 'INICIO'
         # carrega caminho de musicas de gameover (opcional)
         self.gameover_music_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'gameovertheme.mp3')
         
@@ -108,75 +112,107 @@ class Jogo:
         while self.rodando:
             dt = self.clock.tick(60) / 1000.0
 
-            # processa eventos
+            # variaveis de controle
+            proximo_estado = None
+            tempo_final_ms = None
+            
+            # processa 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.rodando = False
+                    continue
                 
-                # passa eventos para a tela atual (se ela tiver handle_event)
+                # passa eventos para a tela atual
                 tela_ativa = self.telas[self.tela_atual]
                 if hasattr(tela_ativa, 'handle_event'):
-                    resultado = tela_ativa.handle_event(event)
+                    resultado_evento = tela_ativa.handle_event(event)
 
-                    # Tratamento especial para RESTART vindo da TelaGameOver
-                    if resultado == 'RESTART':
-                        # faz hard restart do nível e volta para a tela de jogo
-                        # garante que TelaJogo possui restart()
+                    # desempacota o resultado do evento (pode ser tupla ou string)
+                    valor_retornado = None
+                    if isinstance(resultado_evento, tuple) and len(resultado_evento) == 2:
+                        proximo_estado, valor_retornado = resultado_evento
+                    elif isinstance(resultado_evento, str):
+                        proximo_estado = resultado_evento
+
+                    if proximo_estado == 'SAIR':
+                        self.rodando = False
+                        continue
+                        
+                    if proximo_estado == 'RESTART':
+                        # Se for RESTART, executamos a ação de reinício
                         if hasattr(self.telas['JOGO'], 'restart'):
                             self.telas['JOGO'].restart()
                         else:
-                            # fallback para recriar via setup() caso não exista restart()
                             self.telas['JOGO'].setup()
-                        # iniciar o timer de gravidade e alternar para JOGO
+                        
                         self.telas['JOGO'].iniciar_tempo_gravidade()
                         self.tela_atual = 'JOGO'
-                        # restaurar música do tema ao voltar para o jogo
                         self._handle_screen_music(self.tela_atual)
-                        # pula tratamento normal abaixo
-                        continue
+                        
+                        proximo_estado = None 
+                        break 
 
-                    if resultado == 'SAIR':
-                        self.rodando = False
-                    elif resultado and resultado in self.telas:
-                        # se for voltar para JOGO via outra tela (ex: INICIO -> JOGO)
-                        if resultado == 'JOGO':
-                            self.telas['JOGO'].iniciar_tempo_gravidade()
-                        self.tela_atual = resultado
-                        # ajusta música conforme a nova tela (game over ou voltar ao tema)
-                        self._handle_screen_music(self.tela_atual)
-
-            # atualiza a tela atual
+                    if self.tela_atual == 'INPUT_NOME' and valor_retornado:
+                        self.nome_jogador = valor_retornado
+                        # Força a transição para JOGO
+                        proximo_estado = 'JOGO' 
+                        
+                        
+            # 2. atualiza tela
             tela_ativa = self.telas[self.tela_atual]
-            proximo_estado = tela_ativa.update(dt)
+            resultado_update = tela_ativa.update(dt)
 
-            # troca de tela se necessário
+            # desempacota o resultado do update (vindo tipicamente de TelaJogo)
+            proximo_estado_update = None
+            if isinstance(resultado_update, tuple) and len(resultado_update) == 2:
+                proximo_estado_update, tempo_final_ms = resultado_update
+                
+                # se a TelaJogo retornou o estado final e o tempo
+                if proximo_estado_update in ['VITORIA', 'GAMEOVER'] and self.tela_atual == 'JOGO':
+                    proximo_estado = proximo_estado_update
+                
+            elif isinstance(resultado_update, str):
+                # filtra comandos de acao como 'RESTART'
+                if resultado_update == 'RESTART': 
+                    proximo_estado = None 
+                elif resultado_update != self.tela_atual:
+                    proximo_estado = resultado_update
+
+
+            # troca de tela e processa o resultado final (TEMPO)
             if proximo_estado and proximo_estado != self.tela_atual:
 
-             # se o próximo estado for 'JOGO', inicia o tempo da gravidade.
+                # se for para VITORIA, salva o ranking ANTES de mudar de tela
+                if proximo_estado == 'VITORIA' and tempo_final_ms is not None:
+                    self.telas['VITORIA'].set_tempo_final(tempo_final_ms, self.nome_jogador)
+
+                # se for para JOGO (inicio de um novo jogo ou vindo do menu), reinicia o nível e a gravidade.
                 if proximo_estado == 'JOGO':
-                    self.telas['JOGO'].iniciar_tempo_gravidade()
+                    # chama restart() para garantir que o mapa e objetivos sejam zerados
+                    if hasattr(self.telas['JOGO'], 'restart'):
+                         self.telas['JOGO'].restart() 
+                    
+                    self.telas['JOGO'].iniciar_tempo_gravidade() # inicia o timer e cronômetro
+                    
                 self.tela_atual = proximo_estado
-                # ajusta música ao trocar de tela
                 self._handle_screen_music(self.tela_atual)
 
             # desenha a tela atual
             if hasattr(tela_ativa, 'draw'):
                 tela_ativa.draw()
-            
+                
             pygame.display.update()
- 
+    
         pygame.quit() 
 
     def _handle_screen_music(self, screen_name):
-        """Troca a música quando for para GAMEOVER (toca gameover) ou restaura o tema."""
-        # se for gameover, tenta tocar gameover music (se existir)
+        # troca a música quando for para GAMEOVER (toca gameover) ou restaura o tema
         if screen_name == 'GAMEOVER' and os.path.exists(self.gameover_music_path):
             pygame.mixer.music.stop()
             pygame.mixer.music.load(self.gameover_music_path)
             pygame.mixer.music.play(-1)
             return
 
-        # caso contrário, restaura o tema se disponível
         if self.theme_music_path:
             pygame.mixer.music.stop()
             pygame.mixer.music.load(self.theme_music_path)

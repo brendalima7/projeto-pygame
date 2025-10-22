@@ -14,7 +14,7 @@ class TelaInicio:
             if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                 return 'SAIR'
             if event.key == pygame.K_SPACE:
-                return 'JOGO'
+                return 'INPUT_NOME'
         return None
         
     def update(self, dt):

@@ -19,6 +19,8 @@ class TelaGameOver:
                 return 'SAIR'
             if event.key == pygame.K_SPACE:
                 return 'RESTART'
+            if event.key == pygame.K_r:
+                return 'RANKING'
         return None
 
     def update(self, dt):
@@ -51,3 +53,6 @@ class TelaGameOver:
    
         txt = self.assets['fonte2'].render("PRESSIONE SPACE PARA RECOMEÇAR", True, (255,255,255))
         screen.blit(txt, (w//2 - txt.get_width()//2, h - 100))
+
+        rank = self.assets['fonte2'].render("PRESSIONE R PARA VER RANKING", True, (255,255,255))
+        screen.blit(rank, (w//2 - txt.get_width()//2, h - 200))
