@@ -48,7 +48,8 @@ def condicoes_iniciais():
 
 class Jogo:
     def __init__(self):
-        pygame.init() 
+        pygame.init()
+        pygame.mixer.init()
         
         self.window = pygame.display.set_mode((WINDOWWIDHT, WINDOWHEIGHT))
         pygame.display.set_caption('SWITCH BACK')
@@ -57,6 +58,14 @@ class Jogo:
         self.rodando = True 
 
         self.assets = condicoes_iniciais()
+
+        # Carrega e inicia a música de fundo
+        caminho_musica = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'theme.mp3')
+        if os.path.exists(caminho_musica):
+            pygame.mixer.music.load(caminho_musica)
+            pygame.mixer.music.set_volume(0.5)  # Ajusta o volume para 50%
+            pygame.mixer.music.play(-1)  # -1 faz a música tocar em loop infinito
+
         self.telas = {
             'INICIO': TelaInicio(self.window,self.assets),
             'JOGO': TelaJogo(self.window, self.assets),
