@@ -45,6 +45,28 @@ def condicoes_iniciais():
         num_frames=4                      
     ) 
     assets['vidas_max'] = 5
+    # carrega sons de efeitos
+    caminho_pickup = os.path.join('assets', 'sound', 'capturaitem.mp3')
+    if os.path.exists(caminho_pickup):
+        assets['pickup_sound'] = pygame.mixer.Sound(caminho_pickup)
+    else:
+        assets['pickup_sound'] = None
+    
+    # carrega som de passos
+    caminho_passos = os.path.join('assets', 'sound', 'passo.mp3')
+    if os.path.exists(caminho_passos):
+        assets['footstep_sound'] = pygame.mixer.Sound(caminho_passos)
+        assets['footstep_sound'].set_volume(0.3)  # volume mais baixo para passos
+    else:
+        assets['footstep_sound'] = None
+
+    # carrega som de pisada em monstro
+    caminho_pisada = os.path.join('assets', 'sound', 'pisando.mp3')
+    if os.path.exists(caminho_pisada):
+        assets['stomp_sound'] = pygame.mixer.Sound(caminho_pisada)
+    else:
+        assets['stomp_sound'] = None
+
     return assets
 
 class Jogo:
@@ -61,9 +83,11 @@ class Jogo:
         self.assets = condicoes_iniciais()
 
         # Carrega e inicia a música de fundo
-        caminho_musica = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'theme.mp3')
-        if os.path.exists(caminho_musica):
-            pygame.mixer.music.load(caminho_musica)
+        caminho_musica = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'matue.mp3')
+        # armazena o caminho do tema para poder restaurá-lo depois
+        self.theme_music_path = caminho_musica if os.path.exists(caminho_musica) else None
+        if self.theme_music_path:
+            pygame.mixer.music.load(self.theme_music_path)
             pygame.mixer.music.set_volume(0.5)  # Ajusta o volume para 50%
             pygame.mixer.music.play(-1)  # -1 faz a música tocar em loop infinito
 
@@ -76,6 +100,8 @@ class Jogo:
 
         # define a tela inicial
         self.tela_atual = tela_atual
+        # carrega caminho de musicas de gameover (opcional)
+        self.gameover_music_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'gameovertheme.mp3')
         
     # loop principal
     def run(self):
@@ -104,6 +130,8 @@ class Jogo:
                         # iniciar o timer de gravidade e alternar para JOGO
                         self.telas['JOGO'].iniciar_tempo_gravidade()
                         self.tela_atual = 'JOGO'
+                        # restaurar música do tema ao voltar para o jogo
+                        self._handle_screen_music(self.tela_atual)
                         # pula tratamento normal abaixo
                         continue
 
@@ -114,6 +142,8 @@ class Jogo:
                         if resultado == 'JOGO':
                             self.telas['JOGO'].iniciar_tempo_gravidade()
                         self.tela_atual = resultado
+                        # ajusta música conforme a nova tela (game over ou voltar ao tema)
+                        self._handle_screen_music(self.tela_atual)
 
             # atualiza a tela atual
             tela_ativa = self.telas[self.tela_atual]
@@ -126,6 +156,8 @@ class Jogo:
                 if proximo_estado == 'JOGO':
                     self.telas['JOGO'].iniciar_tempo_gravidade()
                 self.tela_atual = proximo_estado
+                # ajusta música ao trocar de tela
+                self._handle_screen_music(self.tela_atual)
 
             # desenha a tela atual
             if hasattr(tela_ativa, 'draw'):
@@ -134,6 +166,21 @@ class Jogo:
             pygame.display.update()
  
         pygame.quit() 
+
+    def _handle_screen_music(self, screen_name):
+        """Troca a música quando for para GAMEOVER (toca gameover) ou restaura o tema."""
+        # se for gameover, tenta tocar gameover music (se existir)
+        if screen_name == 'GAMEOVER' and os.path.exists(self.gameover_music_path):
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load(self.gameover_music_path)
+            pygame.mixer.music.play(-1)
+            return
+
+        # caso contrário, restaura o tema se disponível
+        if self.theme_music_path:
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load(self.theme_music_path)
+            pygame.mixer.music.play(-1)
             
 if __name__ == '__main__':
     game = Jogo()

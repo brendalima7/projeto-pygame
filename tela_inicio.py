@@ -30,7 +30,7 @@ class TelaInicio:
     def draw(self):
         self.window.fill((0,100,100))
         self.window.blit(self.assets['fundo_inicial'],(0,0))
-        img_tempo = self.assets['fonte2'].render("PRESSIONE ESPAÇO PARA JOGAR", True, (255, 255, 255))
+        img_tempo = self.assets['fonte2'].render("PRESSIONE SPACE PARA JOGAR", True, (255, 255, 255))
         img_tempo.set_alpha(int(self.alpha))
         pos_x = self.window.get_width() // 2 - img_tempo.get_width() // 2
         self.window.blit(img_tempo, (pos_x, 720))

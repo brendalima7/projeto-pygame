@@ -114,6 +114,10 @@ class Jogador(Sprite):
 
         if keys[pygame.K_SPACE] and self.no_chao and not self.subindo_escada:
             self.direcao.y = self.velocidade_y
+            # toca som de pulo
+            footstep = self.assets.get('footstep_sound')
+            if footstep:
+                footstep.play()
 
         # marcar intenção de subir/descer escada
         if keys[pygame.K_UP]:

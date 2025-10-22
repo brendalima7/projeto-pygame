@@ -162,6 +162,7 @@ class TelaJogo:
         if self.jogador.vidas <= 0:
             # limpa inventario ao morrer
             self.inventario.clear()
+            # (não tocar pickup_sound aqui) - gameover terá sua própria música via Jogo
             return 'GAMEOVER'
         else:
             # reseta a posição do jogador para o ponto de spawn
@@ -234,6 +235,11 @@ class TelaJogo:
                 # guarda no inventario (mantendo a imagem original para exibir)
                 imagem_item = item.image.copy() if hasattr(item, 'image') and item.image is not None else None
 
+                # toca som de coleta se disponível
+                pickup = self.assets.get('pickup_sound')
+                if pickup:
+                    pickup.play()
+
                 self.inventario.append({'tipo': tipo, 'image': imagem_item})
 
                 if tipo == 'shield':
@@ -274,6 +280,10 @@ class TelaJogo:
 
             if player_half.colliderect(monster_half) and moving_towards and alinhado_horizontal:
                 monstro.kill()
+                # toca som de pisada no monstro
+                stomp = self.assets.get('stomp_sound')
+                if stomp:
+                    stomp.play()
                 # ricochete: força o sinal dependendo da gravidade
                 sinal = -1 if self.jogador.gravidade_valor < 0 else 1
                 self.jogador.direcao.y = sinal * (abs(self.jogador.velocidade_y) / 2)

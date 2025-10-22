@@ -49,5 +49,5 @@ class TelaGameOver:
         screen.blit(img1, rect1)
         screen.blit(img2, rect2)
    
-        txt = self.assets['fonte2'].render("Pressione SPACE para reiniciar", True, (255,255,255))
+        txt = self.assets['fonte2'].render("PRESSIONE SPACE PARA RECOMEÇAR", True, (255,255,255))
         screen.blit(txt, (w//2 - txt.get_width()//2, h - 100))
