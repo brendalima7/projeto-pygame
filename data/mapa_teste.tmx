@@ -3,9 +3,6 @@
  <tileset firstgid="1" source="ColorfulAdventureAutotile.tsx"/>
  <tileset firstgid="57" source="sheet.tsx"/>
  <tileset firstgid="193" source="ColorfulAdventureAccesories.tsx"/>
- <tileset firstgid="241" name="items" tilewidth="16" tileheight="16" tilecount="64" columns="8">
-  <image source="../../../../Downloads/itemiconpack32.png" width="128" height="128"/>
- </tileset>
  <tileset firstgid="305" name=" Items" tilewidth="16" tileheight="16" tilecount="48" columns="6">
   <image source="Items.png" width="96" height="143"/>
  </tileset>

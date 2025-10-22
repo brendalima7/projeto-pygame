@@ -24,12 +24,13 @@ def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
 def condicoes_iniciais():  
     assets = {} 
     assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (100,100))
-    assets['map_surface'] = pygame.image.load('assets/ground.png').convert_alpha()
     assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
     assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundoinvertido.png'), (3200,1600))
     assets['fonte'] = pygame.font.Font('assets/font/PressStart2P.ttf', 28)
     assets['fonte2'] = pygame.font.Font('assets/font/PressStart2P.ttf', 24)
     assets['fundo_inicial']=pygame.transform.scale(pygame.image.load('assets/fundo_inicial.png'), (1600,880))
+    assets['game_over1'] = pygame.transform.scale(pygame.image.load('assets/game_over1.png'), (1920,980))
+    assets['game_over2'] = pygame.transform.scale(pygame.image.load('assets/game_over2.png'), (1920,980))
 
     # imagens de animacao jogador
     assets['animacoes_jogador'] = carrega_frames_animacao(
@@ -70,7 +71,7 @@ class Jogo:
             'INICIO': TelaInicio(self.window,self.assets),
             'JOGO': TelaJogo(self.window, self.assets),
             'VITORIA': TelaVitoria(self.window),
-            'GAMEOVER': TelaGameOver(self.window)
+            'GAMEOVER': TelaGameOver(self.window,self.assets)
         }
 
         # define a tela inicial

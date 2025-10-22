@@ -43,7 +43,7 @@ class Jogador(Sprite):
 
         # receber dicionario de animacoes
         self.animacoes = assets['animacoes_jogador']
-        # --- novo: pré-calcula as versões invertidas verticalmente ---
+        
         self.animacoes_invertidas = {}
         for key, frames in self.animacoes.items():
             # cria lista de frames virados de cabeça para baixo (flip vertical)
