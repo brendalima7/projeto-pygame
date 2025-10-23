@@ -14,6 +14,7 @@ from os.path import join
 from sprites import *
 from cameras import *
 from constantes import *
+from utils import resource_path
 
 
 class TelaJogo:
@@ -83,7 +84,10 @@ class TelaJogo:
         - Cria CameraGroup com dimensões do mapa.
         - Instancia Jogador, Monstro(s), Item(s) e sprites de colisão.
         """
-        tmx_mapa = load_pygame(join('data', 'mapa_teste.tmx'))
+        mapa_relativo = join('data', 'mapa_teste.tmx')
+        mapa_absoluto = resource_path(mapa_relativo)
+        tmx_mapa = load_pygame(mapa_absoluto)
+        # LINHA ORIGINAL (load_pygame(join('data', 'mapa_teste.tmx'))) FOI REMOVIDA/SUBSTITUÍDA
 
         map_pixel_width = tmx_mapa.width * TILE_SIZE
         map_pixel_height = tmx_mapa.height * TILE_SIZE
@@ -218,7 +222,7 @@ class TelaJogo:
 
         Args:
             force_state (bool | None): Se fornecido, força o estado (True = invertida).
-                                       Caso contrário, alterna o estado atual.
+                                        Caso contrário, alterna o estado atual.
         """
         if force_state is None:
             self.gravidade_invertida = not self.gravidade_invertida

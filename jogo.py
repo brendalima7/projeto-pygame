@@ -1,6 +1,4 @@
 """
-Módulo principal do jogo SWITCH BACK.
-
 Contém a definição da classe `Jogo`, funções utilitárias para carregar
 assets/frames e a rotina principal (`run`) que gerencia o loop do jogo
 e a troca entre telas.
@@ -17,17 +15,17 @@ from tela_instrucoes_1 import TelaInstrucoes1
 from tela_instrucoes_2 import TelaInstrucoes2 
 from constantes import *
 import os
+# Importação corrigida para evitar circular dependency e usar a função de caminho
+from utils import resource_path
 
-def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
+# 2. FUNÇÃO UTILITÁRIA CORRIGIDA: AGORA USA resource_path INTERNAMENTE
+def carrega_frames_animacao(arquivo_base_relativo, direcoes, num_frames):
     """Carrega e escala frames de animação a partir de um diretório.
-
-    Percorre as subpastas indicadas em `direcoes` dentro de `arquivo_base`
-    e carrega `num_frames` imagens nomeadas como "0.png", "1.png", etc.
-    As imagens são escaladas para 50x50 e retornadas em um dicionário
-    mapeando direção -> lista de frames.
+    
+    A função foi modificada para usar resource_path no caminho completo do arquivo.
 
     Args:
-        arquivo_base (str): Caminho base onde estão as pastas de direção.
+        arquivo_base_relativo (str): Caminho base onde estão as pastas de direção (ex: 'assets/jogador_mapa').
         direcoes (list[str]): Lista de nomes de subpastas (direções).
         num_frames (int): Número de frames a carregar por direção.
 
@@ -36,73 +34,104 @@ def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
               de superfícies Pygame (frames) escaladas.
     """
     animacoes = {}
+    
+    # A base do path deve ser obtida aqui dentro da função, antes do loop
+    base_path_abs = resource_path(arquivo_base_relativo)
+    
     for direction in direcoes:
         frames = []
-        path = os.path.join(arquivo_base, direction)
+        path = os.path.join(base_path_abs, direction) # Agora usa a base ABSOLUTA
+        
         for i in range(num_frames):
             filename = f"{i}.png" 
             full_path = os.path.join(path, filename)
+            
+            # O caminho 'full_path' já é compatível com PyInstaller
             image = pygame.transform.scale(pygame.image.load(full_path).convert_alpha(), (50,50))
             frames.append(image)
+            
         animacoes[direction] = frames
     return animacoes
 
+
+# 3. FUNÇÃO DE CARREGAMENTO DE ASSETS CORRIGIDA
 def condicoes_iniciais():
     """Carrega e retorna um dicionário com assets iniciais utilizados pelo jogo.
-
-    Assets carregados incluem imagens (backgrounds, telas, sprites),
-    fontes, animações do jogador e do monstro, e efeitos sonoros (quando
-    os arquivos existem).
+    
+    Todos os caminhos de assets foram corrigidos para usar resource_path().
 
     Returns:
         dict: Dicionário `assets` contendo superfícies, fontes, sons e
               configurações (ex: 'vidas_max').
     """
-    assets = {} 
-    assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (100,100))
-    assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
-    assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundoinvertido.png'), (3200,1600))
-    assets['fonte'] = pygame.font.Font('assets/font/PressStart2P.ttf', 28)
-    assets['fonte2'] = pygame.font.Font('assets/font/PressStart2P.ttf', 24)
-    assets['fundo_inicial']=pygame.transform.scale(pygame.image.load('assets/fundo_inicial.png'), (1600,880))
-    assets['tela_nome'] = pygame.transform.scale(pygame.image.load('assets/tela_nome.png'), (1600,880))
-    assets['game_over'] = pygame.transform.scale(pygame.image.load('assets/game_over.png'), (1600,880))
-    assets['tela_vitoria'] = pygame.transform.scale(pygame.image.load('assets/tela_vitoria.png'), (1600,880))
-    assets['tela_instrucoes1'] = pygame.transform.scale(pygame.image.load('assets/tela_instrucoes1.png'), (1600,880))
-    assets['tela_instrucoes2'] = pygame.transform.scale(pygame.image.load('assets/tela_instrucoes2.png'), (1600,880))
-
-    # imagens de animacao jogador
+    assets = {}
+    
+    # --- IMAGENS ---
+    caminho_jogador = resource_path(os.path.join('assets', 'jogador_mapa', 'down', '0.png'))
+    assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load(caminho_jogador).convert_alpha(), (100,100))
+    
+    caminho_normal = resource_path(os.path.join('assets', 'fundo_mundonormal.png'))
+    assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load(caminho_normal), (3200,1600))
+    
+    caminho_invertido = resource_path(os.path.join('assets', 'fundo_mundoinvertido.png'))
+    assets['fundo_mundoinvertido'] = pygame.transform.scale(pygame.image.load(caminho_invertido), (3200,1600))
+    
+    caminho_inicial = resource_path(os.path.join('assets', 'fundo_inicial.png'))
+    assets['fundo_inicial']=pygame.transform.scale(pygame.image.load(caminho_inicial), (1600,880))
+    
+    caminho_nome = resource_path(os.path.join('assets', 'tela_nome.png'))
+    assets['tela_nome'] = pygame.transform.scale(pygame.image.load(caminho_nome), (1600,880))
+    
+    caminho_go = resource_path(os.path.join('assets', 'game_over.png'))
+    assets['game_over'] = pygame.transform.scale(pygame.image.load(caminho_go), (1600,880))
+    
+    caminho_vitoria = resource_path(os.path.join('assets', 'tela_vitoria.png'))
+    assets['tela_vitoria'] = pygame.transform.scale(pygame.image.load(caminho_vitoria), (1600,880))
+    
+    caminho_ins1 = resource_path(os.path.join('assets', 'tela_instrucoes1.png'))
+    assets['tela_instrucoes1'] = pygame.transform.scale(pygame.image.load(caminho_ins1), (1600,880))
+    
+    caminho_ins2 = resource_path(os.path.join('assets', 'tela_instrucoes2.png'))
+    assets['tela_instrucoes2'] = pygame.transform.scale(pygame.image.load(caminho_ins2), (1600,880))
+    
+    # --- FONTES ---
+    caminho_fonte = resource_path(os.path.join('assets', 'font', 'PressStart2P.ttf'))
+    assets['fonte'] = pygame.font.Font(caminho_fonte, 28)
+    assets['fonte2'] = pygame.font.Font(caminho_fonte, 24)
+    
+    # --- ANIMAÇÕES ---
+    
     assets['animacoes_jogador'] = carrega_frames_animacao(
-        arquivo_base='assets/jogador_mapa',
+        arquivo_base_relativo='assets/jogador_mapa',
         direcoes=['down', 'up', 'left', 'right'],
         num_frames=4
     )
-    # imagens de animacao monstro
+    
     assets['animacoes_monstro'] = carrega_frames_animacao(
-        arquivo_base='assets/jogador_mapa', 
-        direcoes=['left', 'right'],        
-        num_frames=4                      
+        arquivo_base_relativo='assets/jogador_mapa', 
+        direcoes=['left', 'right'], 
+        num_frames=4 
     ) 
     assets['vidas_max'] = 5
-    # carrega sons de efeitos
-    caminho_pickup = os.path.join('assets', 'sound', 'capturaitem.mp3')
-    if os.path.exists(caminho_pickup):
-        assets['pickup_sound'] = pygame.mixer.Sound(caminho_pickup)
+    
+    # --- SONS ---
+    
+    caminho_pickup_abs = resource_path(os.path.join('assets', 'sound', 'capturaitem.mp3'))
+    if os.path.exists(caminho_pickup_abs):
+        assets['pickup_sound'] = pygame.mixer.Sound(caminho_pickup_abs)
     else:
         assets['pickup_sound'] = None
     
-    # carrega som de passos
-    caminho_passos = os.path.join('assets', 'sound', 'passo.mp3')
-    if os.path.exists(caminho_passos):
-        assets['footstep_sound'] = pygame.mixer.Sound(caminho_passos)
+    caminho_passos_abs = resource_path(os.path.join('assets', 'sound', 'passo.mp3'))
+    if os.path.exists(caminho_passos_abs):
+        assets['footstep_sound'] = pygame.mixer.Sound(caminho_passos_abs)
         assets['footstep_sound'].set_volume(0.3)
     else:
         assets['footstep_sound'] = None
 
-    # carrega som de pisada em monstro
-    caminho_pisada = os.path.join('assets', 'sound', 'pisando.mp3')
-    if os.path.exists(caminho_pisada):
-        assets['stomp_sound'] = pygame.mixer.Sound(caminho_pisada)
+    caminho_pisada_abs = resource_path(os.path.join('assets', 'sound', 'pisando.mp3'))
+    if os.path.exists(caminho_pisada_abs):
+        assets['stomp_sound'] = pygame.mixer.Sound(caminho_pisada_abs)
     else:
         assets['stomp_sound'] = None
 
@@ -110,22 +139,6 @@ def condicoes_iniciais():
 
 class Jogo:
     """Classe que encapsula o loop principal do jogo e o gerenciamento de telas.
-
-    A instância carrega assets, inicializa Pygame, mantém o estado atual
-    da tela e controla a troca de músicas conforme a tela ativa.
-
-    Attributes:
-        window (pygame.Surface): Janela principal do jogo.
-        clock (pygame.time.Clock): Relógio para controlar FPS.
-        rodando (bool): Flag de execução do loop principal.
-        assets (dict): Dicionário de assets carregados.
-        nome_jogador (str): Nome do jogador atual (preenchido no input).
-        telas (dict): Dicionário com instâncias das telas do jogo.
-        tela_atual (str): Identificador da tela ativa.
-        theme_music_path (str|None): Caminho para música de tema.
-        gameover_music_path (str): Caminho para música de game over.
-        vitoria_music_path (str): Caminho para música de vitória.
-        current_music_path (str|None): Caminho da faixa atualmente reproduzida.
     """
 
     def __init__(self):
@@ -143,9 +156,10 @@ class Jogo:
 
         self.nome_jogador = "" # Variável para armazenar o nome
         
-        # Carrega e inicia a musica de fundo
-        caminho_musica = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'matue.mp3')
+        # CORREÇÃO: Usar resource_path para caminhos de música
+        caminho_musica = resource_path(os.path.join('assets', 'sound', 'matue.mp3'))
         self.theme_music_path = caminho_musica if os.path.exists(caminho_musica) else None
+        
         if self.theme_music_path:
             pygame.mixer.music.load(self.theme_music_path)
             pygame.mixer.music.set_volume(1)
@@ -164,17 +178,15 @@ class Jogo:
 
         # define a tela inicial
         self.tela_atual = 'INICIO'
-        # caminhos de músicas específicas
-        self.gameover_music_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'gameovertheme.mp3')
-        self.vitoria_music_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'vitoria_sound.mp3')
+        
+        # CORREÇÃO: Usar resource_path para caminhos de música (Game Over e Vitória)
+        self.gameover_music_path = resource_path(os.path.join('assets', 'sound', 'gameovertheme.mp3'))
+        self.vitoria_music_path = resource_path(os.path.join('assets', 'sound', 'vitoria_sound.mp3'))
+        
         self.current_music_path = None
         
     def run(self):
         """Executa o loop principal do jogo.
-
-        O loop processa eventos, repassa eventos e updates para a tela ativa,
-        trata retornos/estado vindos das telas (ex: RESTART, RANKING, VITORIA,
-        GAMEOVER) e realiza a troca de telas e músicas conforme necessário.
         """
         while self.rodando:
             dt = self.clock.tick(60) / 1000.0
