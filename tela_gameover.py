@@ -2,16 +2,10 @@ import pygame
 import math
 
 class TelaGameOver:
-    def __init__(self, window, assets, fade_period=2.5, parallax_amp=6):
+    def __init__(self, window, assets):
         self.window = window
         self.assets = assets
-        self.img1 = assets['game_over1']
-        self.img2 = assets['game_over2']
-        self.w, self.h = self.window.get_size()
-
-        # parâmetros de animação
-        self.time = 0.0
-        self.fade_period = fade_period
+        
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -24,35 +18,20 @@ class TelaGameOver:
         return None
 
     def update(self, dt):
-        self.time += dt
         return 'GAMEOVER'
 
     def draw(self):
-        w, h = self.w, self.h
-        screen = self.window
+        self.window.fill((0,100,100))
+        self.window.blit(self.assets['game_over'],(0,0))
+        
+        txt = self.assets['fonte2'].render("PRESSIONE SPACE PARA RECOMEÇAR", True, (255, 255, 255))
+    
+        pos_x_txt = self.window.get_width() // 2 - txt.get_width() // 2
 
-        phase = (2 * math.pi * (self.time / self.fade_period))
-        alpha = (math.sin(phase) + 1.0) / 4.0
+        rank = self.assets['fonte2'].render("PRESSIONE R PARA VER RANKING", True, (255, 255, 255))
+    
+        pos_x_rank = self.window.get_width() // 2 - rank.get_width() // 2
 
-        a1 = int((1.0 - alpha) * 255)
-        a2 = int(alpha * 255)
-
-        # cria cópias para aplicar alpha
-        img1 = self.img1.copy()
-        img2 = self.img2.copy()
-        img1.set_alpha(a1)
-        img2.set_alpha(a2)
-
-        # centraliza as imagens
-        rect1 = img1.get_rect(center=(w//2, h//2))
-        rect2 = img2.get_rect(center=(w//2, h//2))
-
-        # desenha (uma sobre a outra)
-        screen.blit(img1, rect1)
-        screen.blit(img2, rect2)
-   
-        txt = self.assets['fonte2'].render("PRESSIONE SPACE PARA RECOMEÇAR", True, (255,255,255))
-        screen.blit(txt, (w//2 - txt.get_width()//2, h - 100))
-
-        rank = self.assets['fonte2'].render("PRESSIONE R PARA VER RANKING", True, (255,255,255))
-        screen.blit(rank, (w//2 - txt.get_width()//2, h - 200))
+        
+        self.window.blit(txt, (pos_x_txt,750))
+        self.window.blit(rank, (pos_x_rank,800))

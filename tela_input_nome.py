@@ -51,8 +51,6 @@ class InputBox:
             cursor_h = self.rect.h - 10 
             pygame.draw.line(screen, COLOR_TEXT, (cursor_x, cursor_y), (cursor_x, cursor_y + cursor_h), 2)
 
-
-# --- Tela principal ---
 class TelaInputNome:
     def __init__(self, window, assets):
         self.window = window
@@ -71,6 +69,12 @@ class TelaInputNome:
         if retorno == 'COMPLETO':
             # Retorna o próximo estado ('INICIO') E o nome capturado
             return 'INICIO', nome_digitado.strip()
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_ESCAPE, pygame.K_q):
+                return 'SAIR'
+            if event.key == pygame.K_SPACE:
+                return 'INSTRUCOES1'
             
         return None
 
@@ -80,14 +84,24 @@ class TelaInputNome:
 
     def draw(self):
         self.window.fill((0, 0, 0))
-        
-        titulo = self.assets['fonte'].render("SWITCH BACK", True, (255, 255, 255))
-        instrucao = self.assets['fonte2'].render("DIGITE SEU NOME (ENTER):", True, (200, 200, 200))
-        
-        rect_titulo = titulo.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT // 2 - 150))
-        self.window.blit(titulo, rect_titulo)
+        self.window.blit(self.assets['tela_nome'], (0, 0))
 
-        rect_instrucao = instrucao.get_rect(center=(WINDOWWIDHT // 2, self.input_box.rect.y - 40))
+        # Renderiza o texto
+        instrucao = self.assets['fonte2'].render("DIGITE SEU NOME (ENTER):", True, (200, 200, 200))
+
+        # Margem inferior da tela
+        margem_inferior = 80  # ajuste conforme quiser
+
+        # Posição Y para a caixa de input e o texto
+        input_y = WINDOWHEIGHT - margem_inferior - self.input_box.rect.height
+        text_y = input_y - 60  # o texto fica 40px acima da caixa
+
+        # Atualiza a posição da caixa de input
+        self.input_box.rect.center = (WINDOWWIDHT // 2, input_y)
+
+        # Centraliza o texto horizontalmente
+        rect_instrucao = instrucao.get_rect(center=(WINDOWWIDHT // 2, text_y))
+
+        # Desenha texto e input
         self.window.blit(instrucao, rect_instrucao)
-        
         self.input_box.draw(self.window)

@@ -4,7 +4,9 @@ from tela_jogo import TelaJogo
 from tela_vitoria import TelaVitoria
 from tela_gameover import TelaGameOver
 from tela_input_nome import TelaInputNome 
-from tela_ranking import TelaRanking      
+from tela_ranking import TelaRanking 
+from tela_instrucoes_1 import TelaInstrucoes1
+from tela_instrucoes_2 import TelaInstrucoes2 
 from constantes import *
 import os
 
@@ -30,8 +32,11 @@ def condicoes_iniciais():
     assets['fonte'] = pygame.font.Font('assets/font/PressStart2P.ttf', 28)
     assets['fonte2'] = pygame.font.Font('assets/font/PressStart2P.ttf', 24)
     assets['fundo_inicial']=pygame.transform.scale(pygame.image.load('assets/fundo_inicial.png'), (1600,880))
-    assets['game_over1'] = pygame.transform.scale(pygame.image.load('assets/game_over1.png'), (1920,980))
-    assets['game_over2'] = pygame.transform.scale(pygame.image.load('assets/game_over2.png'), (1920,980))
+    assets['tela_nome'] = pygame.transform.scale(pygame.image.load('assets/tela_nome.png'), (1600,880))
+    assets['game_over'] = pygame.transform.scale(pygame.image.load('assets/game_over.png'), (1600,880))
+    assets['tela_vitoria'] = pygame.transform.scale(pygame.image.load('assets/tela_vitoria.png'), (1600,880))
+    assets['tela_instrucoes1'] = pygame.transform.scale(pygame.image.load('assets/tela_instrucoes1.png'), (1600,880))
+    assets['tela_instrucoes2'] = pygame.transform.scale(pygame.image.load('assets/tela_instrucoes2.png'), (1600,880))
 
     # imagens de animacao jogador
     assets['animacoes_jogador'] = carrega_frames_animacao(
@@ -99,7 +104,9 @@ class Jogo:
             'JOGO': TelaJogo(self.window, self.assets),
             'VITORIA': TelaVitoria(self.window, self.assets),
             'GAMEOVER': TelaGameOver(self.window,self.assets),
-            'RANKING': TelaRanking(self.window, self.assets)
+            'RANKING': TelaRanking(self.window, self.assets),
+            'INSTRUCOES1': TelaInstrucoes1(self.window, self.assets),
+            'INSTRUCOES2': TelaInstrucoes2(self.window, self.assets)
         }
 
         # define a tela inicial
@@ -155,7 +162,7 @@ class Jogo:
                     if self.tela_atual == 'INPUT_NOME' and valor_retornado:
                         self.nome_jogador = valor_retornado
                         # Força a transição para JOGO
-                        proximo_estado = 'JOGO' 
+                        proximo_estado = 'INSTRUCOES1' 
                         
                         
             # 2. atualiza tela

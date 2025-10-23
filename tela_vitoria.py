@@ -70,6 +70,7 @@ class TelaVitoria:
     def draw(self):
         # Usando PRETO do seu arquivo constantes.py como cor de fundo
         self.window.fill(PRETO) 
+        self.window.blit(self.assets['tela_vitoria'],(0,0))
         
         # Converte o tempo
         total_segundos = self.tempo_final_ms // 1000
@@ -78,14 +79,9 @@ class TelaVitoria:
         segundos = total_segundos % 60
         tempo_formatado = f"{minutos:02}:{segundos:02}.{ms:03}"
         
-        # Título de Vitória (Branco)
-        texto_vitoria = "VITÓRIA!"
-        img_vitoria = self.assets['fonte'].render(texto_vitoria, True, (255, 255, 255))
-        rect_vitoria = img_vitoria.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT // 4))
-        self.window.blit(img_vitoria, rect_vitoria)
 
         # Tempo Final (VERDE)
-        texto_tempo = f"Tempo Final: {tempo_formatado}"
+        texto_tempo = f"TEMPO: {tempo_formatado}"
         img_tempo = self.assets['fonte2'].render(texto_tempo, True, VERDE_MAPA) # Usando VERDE_MAPA como uma cor agradável
         rect_tempo = img_tempo.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT // 4 + 70))
         self.window.blit(img_tempo, rect_tempo)
