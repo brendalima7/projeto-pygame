@@ -31,7 +31,7 @@ class TelaRanking:
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE or event.key == pygame.K_RETURN:
+            if event.key == pygame.K_RETURN:
                 return 'INICIO'
         return None
 
@@ -84,7 +84,7 @@ class TelaRanking:
                 self.window.blit(img_linha, (x_pos, y_start + i * 40))
                 
         # dica para retornar
-        texto_retorno = "PRESSIONE ESC PARA RETORNAR"
+        texto_retorno = "PRESSIONE ENTER PARA RETORNAR"
         img_retorno = self.pequena_font.render(texto_retorno, True, (150, 150, 150))
         rect_retorno = img_retorno.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT - 50))
         self.window.blit(img_retorno, rect_retorno)

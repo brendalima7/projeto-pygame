@@ -14,7 +14,7 @@ class TelaVitoria:
         self.nome_jogador = "Player"
         
         # Ações do menu (RESTART/SAIR)
-        self.opcoes = ['REINICIAR', 'MENU PRINCIPAL', 'SAIR']
+        self.opcoes = ['REINICIAR', 'MENU PRINCIPAL', 'SAIR', 'RANKING']
         self.indice_selecionado = 0
         self.ranking_salvo = False # fflag para garantir que salva apenas uma vez
         
@@ -62,6 +62,8 @@ class TelaVitoria:
                     return 'INICIO', None 
                 elif self.opcoes[self.indice_selecionado] == 'SAIR':
                     return 'SAIR', None
+                elif self.opcoes[self.indice_selecionado] == 'RANKING':
+                    return 'RANKING', None
         return None
 
     def update(self, dt):
@@ -82,21 +84,21 @@ class TelaVitoria:
 
         # Tempo Final (VERDE)
         texto_tempo = f"TEMPO: {tempo_formatado}"
-        img_tempo = self.assets['fonte2'].render(texto_tempo, True, VERDE_MAPA) # Usando VERDE_MAPA como uma cor agradável
-        rect_tempo = img_tempo.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT // 4 + 70))
+        img_tempo = self.assets['fonte2'].render(texto_tempo, True, (14, 0, 143)) 
+        rect_tempo = img_tempo.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT // 4 + 100))
         self.window.blit(img_tempo, rect_tempo)
         
         # Nome do Jogador (Branco)
         texto_nome = f"JOGADOR: {self.nome_jogador}"
-        img_nome = self.assets['fonte2'].render(texto_nome, True, (255, 255, 255))
-        rect_nome = img_nome.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT // 4 + 110))
+        img_nome = self.assets['fonte2'].render(texto_nome, True, (0, 0, 0))
+        rect_nome = img_nome.get_rect(center=(WINDOWWIDHT // 2, WINDOWHEIGHT // 4 + 140))
         self.window.blit(img_nome, rect_nome)
 
         # Desenha as opções do menu
         y_start = WINDOWHEIGHT // 2
         for i, opcao in enumerate(self.opcoes):
             # Selecionado: VERMELHO, Não Selecionado: AZUL
-            cor = VERMELHO if i == self.indice_selecionado else AZUL 
+            cor = VERMELHO if i == self.indice_selecionado else (14, 0, 143) 
             img_opcao = self.assets['fonte2'].render(opcao, True, cor)
             rect_opcao = img_opcao.get_rect(center=(WINDOWWIDHT // 2, y_start + i * 50))
             self.window.blit(img_opcao, rect_opcao)

@@ -10,7 +10,7 @@ class TelaInstrucoes1:
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_ESCAPE, pygame.K_q):
                 return 'SAIR'
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_RETURN:
                 return 'INSTRUCOES2'
         return None
 

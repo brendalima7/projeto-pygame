@@ -95,7 +95,7 @@ class Jogo:
         self.theme_music_path = caminho_musica if os.path.exists(caminho_musica) else None
         if self.theme_music_path:
             pygame.mixer.music.load(self.theme_music_path)
-            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.set_volume(1)
             pygame.mixer.music.play(-1)
 
         self.telas = {
@@ -163,7 +163,6 @@ class Jogo:
                         self.nome_jogador = valor_retornado
                         # Força a transição para JOGO
                         proximo_estado = 'INSTRUCOES1' 
-                        
                         
             # 2. atualiza tela
             tela_ativa = self.telas[self.tela_atual]

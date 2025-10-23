@@ -1,7 +1,6 @@
 import pygame
-from constantes import * # Importa WINDOWWIDHT, WINDOWHEIGHT, etc.
+from constantes import * 
 
-# --- Cores e InputBox (Componente para entrada de texto) ---
 COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 COLOR_TEXT = pygame.Color('white')
@@ -22,7 +21,7 @@ class InputBox:
         if event.type == pygame.KEYDOWN:
             if self.active:
                 if event.key == pygame.K_RETURN:
-                    if self.text.strip(): # Só permite continuar se o nome não for vazio
+                    if self.text.strip(): 
                         return 'COMPLETO', self.text
                 elif event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
@@ -71,9 +70,9 @@ class TelaInputNome:
             return 'INICIO', nome_digitado.strip()
         
         if event.type == pygame.KEYDOWN:
-            if event.key in (pygame.K_ESCAPE, pygame.K_q):
+            if event.key == pygame.K_ESCAPE:
                 return 'SAIR'
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_RETURN:
                 return 'INSTRUCOES1'
             
         return None
