@@ -1,3 +1,11 @@
+"""
+Módulo principal do jogo SWITCH BACK.
+
+Contém a definição da classe `Jogo`, funções utilitárias para carregar
+assets/frames e a rotina principal (`run`) que gerencia o loop do jogo
+e a troca entre telas.
+"""
+
 import pygame
 from tela_inicio import TelaInicio
 from tela_jogo import TelaJogo
@@ -10,8 +18,23 @@ from tela_instrucoes_2 import TelaInstrucoes2
 from constantes import *
 import os
 
-# carrega os frames de animacao
 def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
+    """Carrega e escala frames de animação a partir de um diretório.
+
+    Percorre as subpastas indicadas em `direcoes` dentro de `arquivo_base`
+    e carrega `num_frames` imagens nomeadas como "0.png", "1.png", etc.
+    As imagens são escaladas para 50x50 e retornadas em um dicionário
+    mapeando direção -> lista de frames.
+
+    Args:
+        arquivo_base (str): Caminho base onde estão as pastas de direção.
+        direcoes (list[str]): Lista de nomes de subpastas (direções).
+        num_frames (int): Número de frames a carregar por direção.
+
+    Returns:
+        dict: Dicionário onde cada chave é uma direção e o valor é a lista
+              de superfícies Pygame (frames) escaladas.
+    """
     animacoes = {}
     for direction in direcoes:
         frames = []
@@ -24,7 +47,17 @@ def carrega_frames_animacao(arquivo_base, direcoes, num_frames):
         animacoes[direction] = frames
     return animacoes
 
-def condicoes_iniciais(): 
+def condicoes_iniciais():
+    """Carrega e retorna um dicionário com assets iniciais utilizados pelo jogo.
+
+    Assets carregados incluem imagens (backgrounds, telas, sprites),
+    fontes, animações do jogador e do monstro, e efeitos sonoros (quando
+    os arquivos existem).
+
+    Returns:
+        dict: Dicionário `assets` contendo superfícies, fontes, sons e
+              configurações (ex: 'vidas_max').
+    """
     assets = {} 
     assets['jogador_mapa'] = pygame.transform.scale(pygame.image.load('assets/jogador_mapa/down/0.png').convert_alpha(), (100,100))
     assets['fundo_mundonormal'] = pygame.transform.scale(pygame.image.load('assets/fundo_mundonormal.png'), (3200,1600))
@@ -76,7 +109,27 @@ def condicoes_iniciais():
     return assets
 
 class Jogo:
+    """Classe que encapsula o loop principal do jogo e o gerenciamento de telas.
+
+    A instância carrega assets, inicializa Pygame, mantém o estado atual
+    da tela e controla a troca de músicas conforme a tela ativa.
+
+    Attributes:
+        window (pygame.Surface): Janela principal do jogo.
+        clock (pygame.time.Clock): Relógio para controlar FPS.
+        rodando (bool): Flag de execução do loop principal.
+        assets (dict): Dicionário de assets carregados.
+        nome_jogador (str): Nome do jogador atual (preenchido no input).
+        telas (dict): Dicionário com instâncias das telas do jogo.
+        tela_atual (str): Identificador da tela ativa.
+        theme_music_path (str|None): Caminho para música de tema.
+        gameover_music_path (str): Caminho para música de game over.
+        vitoria_music_path (str): Caminho para música de vitória.
+        current_music_path (str|None): Caminho da faixa atualmente reproduzida.
+    """
+
     def __init__(self):
+        """Inicializa Pygame, carrega assets, telas e configurações iniciais."""
         pygame.init()
         pygame.mixer.init()
         
@@ -116,8 +169,13 @@ class Jogo:
         self.vitoria_music_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'vitoria_sound.mp3')
         self.current_music_path = None
         
-    # loop principal
     def run(self):
+        """Executa o loop principal do jogo.
+
+        O loop processa eventos, repassa eventos e updates para a tela ativa,
+        trata retornos/estado vindos das telas (ex: RESTART, RANKING, VITORIA,
+        GAMEOVER) e realiza a troca de telas e músicas conforme necessário.
+        """
         while self.rodando:
             dt = self.clock.tick(60) / 1000.0
 
@@ -166,7 +224,7 @@ class Jogo:
                         # Força a transição para JOGO
                         proximo_estado = 'INSTRUCOES1' 
                         
-            # 2. atualiza tela
+            # atualiza
             tela_ativa = self.telas[self.tela_atual]
             resultado_update = tela_ativa.update(dt)
 
@@ -214,7 +272,19 @@ class Jogo:
         pygame.quit() 
 
     def _handle_screen_music(self, screen_name):
-       
+        """Toca a música apropriada para a tela ativa.
+
+        Prioridade:
+            1. GAMEOVER -> gameover_music_path
+            2. VITORIA  -> vitoria_music_path
+            3. padrão   -> theme_music_path
+
+        A função evita recarregar a mesma faixa repetidamente verificando
+        `self.current_music_path`.
+        
+        Args:
+            screen_name (str): Identificador da tela (ex: 'GAMEOVER', 'VITORIA', ...).
+        """
         # GAMEOVER
         if screen_name == 'GAMEOVER' and os.path.exists(self.gameover_music_path):
             if self.current_music_path != self.gameover_music_path:

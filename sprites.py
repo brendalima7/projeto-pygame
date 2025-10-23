@@ -1,7 +1,32 @@
 from constantes import *
 
+
+"""
+Módulo de sprites do jogo SWITCH BACK.
+
+Contém as classes:
+- Sprite: base para sprites com escala automática.
+- Item: item coletável que herda de Sprite.
+- Jogador: lógica do jogador (movimento, física, escadas, colisões).
+- Monstro: entidade inimiga com IA simples e comportamento de patrulha/perseguição.
+"""
+
 class Sprite(pygame.sprite.Sprite):
+    """Classe base para todas as sprites do jogo.
+
+    Gerencia a escala da imagem com `SCALE_FACTOR` e a criação do rect.
+    Aceita um número variável de grupos (`*groups`) que serão adicionados via
+    `super().__init__(*groups)` (comportamento padrão do pygame).
+    """
+
     def __init__(self, pos, surf, *groups):
+        """Inicializa a sprite base.
+
+        Args:
+            pos (tuple): Posição (x, y) do canto superior esquerdo onde a sprite será colocada.
+            surf (pygame.Surface): Surface original que será escalada.
+            *groups: Grupos do pygame.sprite.Group aos quais esta sprite será adicionada.
+        """
         super().__init__(*groups)
         self.image = pygame.transform.scale_by(surf, SCALE_FACTOR)
         self.rect = self.image.get_rect(topleft = pos)
@@ -10,8 +35,8 @@ class Sprite(pygame.sprite.Sprite):
         """Desenha a sprite na surface aplicando o offset da câmera.
 
         Args:
-            surface (Surface): Superfície onde desenhar a sprite
-            offset (tuple|Vector2): Deslocamento da câmera (x, y)
+            surface (pygame.Surface): Superfície onde desenhar a sprite.
+            offset (tuple|pygame.math.Vector2): Deslocamento da câmera (x, y).
         """
         # Garante que offset seja Vector2 para subtração
         off = pygame.math.Vector2(int(offset[0]), int(offset[1])) if not isinstance(offset, pygame.math.Vector2) else offset
@@ -20,16 +45,47 @@ class Sprite(pygame.sprite.Sprite):
 
 
 class Item(Sprite):
-    """Um item coletável no mapa. Guarda o tipo (ex: 'shield').
-       Herdamos de Sprite para reaproveitar o scaling e o rect/topleft.
+    """Um item coletável no mapa.
+
+    Guarda o tipo (ex.: 'shield') e reutiliza a lógica de escala/rect da classe Sprite.
     """
     def __init__(self, pos, surf, tipo, *groups):
+        """Inicializa um item.
+
+        Args:
+            pos (tuple): Posição do item.
+            surf (pygame.Surface): Imagem do tile/item.
+            tipo (str): Identificador do tipo de item (ex.: 'shield').
+            *groups: Grupos aos quais o item será adicionado.
+        """
         # surf deve ser uma Surface (normalmente obtida via pytmx)
         super().__init__(pos, surf, *groups)
         self.tipo = tipo
 
 class Jogador(Sprite):
+    """Representa o jogador com física, animação e interação com o mundo.
+
+    Implementa:
+    - movimento horizontal e vertical (com gravidade customizável);
+    - controle de pulos considerando gravidade invertida;
+    - interação com escadas (subir/descer);
+    - colisões horizontais e verticais;
+    - animação por frames dependendo do estado;
+    - armazenamento de estado para respawn.
+    """
     def __init__(self, window, assets, pos, groups, collision_sprites, mundo_w, mundo_h, grupo_escadas):
+        """Inicializa o jogador.
+
+        Args:
+            window (pygame.Surface): Superfície principal do jogo.
+            assets (dict): Dicionário de assets (animações, sons, fontes).
+            pos (tuple): Posição inicial do jogador (centro).
+            groups: Grupos onde a entidade será adicionada (passado adiante a Sprite).
+            collision_sprites (Group): Grupos usados para checagem de colisão.
+            mundo_w (int): Largura do mundo em pixels.
+            mundo_h (int): Altura do mundo em pixels.
+            grupo_escadas (Group): Grupo contendo sprites de escada.
+        """
         surf = pygame.Surface((10,10)) # O surf inicial não importa muito, pois a imagem é substituída
         super().__init__(pos, surf, groups)
 
@@ -79,12 +135,22 @@ class Jogador(Sprite):
         self.velocidade_subida = 120
 
     def set_gravidade(self, nova_gravidade, nova_velocidade_y):
+        """Define gravidade e velocidade de pulo do jogador.
+
+        Args:
+            nova_gravidade (float): Valor da gravidade a aplicar.
+            nova_velocidade_y (float): Velocidade de salto correspondente.
+        """
         self.gravidade_valor = nova_gravidade
         self.velocidade_y = nova_velocidade_y
         self.direcao.y = 0
         self.no_chao = False
 
     def reset_state(self):
+        """Reset parcial do estado do jogador sem reposicionar.
+
+        Uso típico: após perder vida e dar respawn mantendo spawn_point.
+        """
         self.direcao.x = 0
         self.direcao.y = 0 
         self.subindo_escada = False
@@ -96,6 +162,7 @@ class Jogador(Sprite):
         # A gravidade será redefinida pela TelaJogo no método alternar_gravidade
     
     def input(self):
+        """Lê o estado do teclado e atualiza intenções de movimento/pulo/escada."""
         keys = pygame.key.get_pressed()
         self.movendo = False
         self.direcao.x = 0
@@ -140,6 +207,7 @@ class Jogador(Sprite):
             self.direcao.y = self.velocidade_y
     
     def verificar_tocando_escada(self):
+        """Retorna a escada (sprite) com a qual o jogador está em contato, se houver."""
         if not self.grupo_escadas:
             return None
         zona = self.rect.inflate(-10, -2)
@@ -149,6 +217,11 @@ class Jogador(Sprite):
         return None
 
     def move(self, dt):
+        """Executa movimento horizontal e vertical, tratando escadas e colisões.
+
+        Args:
+            dt (float): Delta time em segundos.
+        """
         # horizontal
         if not self.subindo_escada:
             self.rect.x += self.direcao.x * self.velocidade * dt
@@ -222,6 +295,11 @@ class Jogador(Sprite):
         self.rect.y = int(self.rect.y)
     
     def collision(self, direcao):
+        """Trata colisões com sprites de colisão para as direções horizontal/vertical.
+
+        Args:
+            direcao (str): 'horizontal' ou 'vertical'.
+        """
         for sprite in self.collision_sprites:
             if sprite.rect.colliderect(self.rect):
                 if direcao == 'horizontal':
@@ -260,6 +338,7 @@ class Jogador(Sprite):
                         self.direcao.y = 0
 
     def limitar_mundo(self):
+        """Impõe limites do mapa ao rect do jogador dependendo da gravidade."""
         # limitacao horizontal 
         if self.rect.left < 0:
             self.rect.left = 0
@@ -285,7 +364,11 @@ class Jogador(Sprite):
                 self.no_chao = True
 
     def update(self, dt):
-        
+        """Atualiza o estado do jogador: entrada, movimento, colisões e animação.
+
+        Args:
+            dt (float): Delta time em segundos.
+        """
         self.prev_rect = self.rect.copy()
 
         # comportamento normal do jogador
@@ -322,7 +405,24 @@ class Jogador(Sprite):
         self.rect = self.image.get_rect(center=old_center)
 
 class Monstro(Sprite):
+    """Entidade inimiga com comportamento de patrulha e perseguição.
+
+    Considera água (não atravessa), aplica gravidade e tem pequenas rotinas
+    de IA (patrulha/perseguição).
+    """
     def __init__(self, pos, groups, assets, collision_sprites, limites_patrulha, jogador_ref, grupo_monstros, water_sprites=None):
+        """Inicializa o monstro.
+
+        Args:
+            pos (tuple): Posição inicial do monstro.
+            groups: Grupos aos quais o monstro pertence.
+            assets (dict): Dicionário de assets (animações, sons).
+            collision_sprites (Group): Sprites sólidos para colisões.
+            limites_patrulha (tuple): (min_x, max_x) para patrulha.
+            jogador_ref (Jogador): Referência ao objeto jogador para perseguição.
+            grupo_monstros (Group): Grupo de monstros.
+            water_sprites (Group | list | None): Sprites/rects representando água.
+        """
         surf = pygame.Surface((32, 32)) 
         super().__init__(pos, surf, groups)
         
@@ -360,10 +460,12 @@ class Monstro(Sprite):
         self.modo_ia = 'patrulha'
 
     def set_gravidade(self, nova_gravidade):
+        """Define a gravidade do monstro."""
         self.gravidade_valor = nova_gravidade
         self.direcao.y = 0
 
     def aplicar_gravidade(self, dt):
+        """Aplica a física vertical (gravidade) ao monstro com rollback se entrar na água."""
         # Antes de aplicar, guarda a posição anterior para possível rollback
         old_rect = self.rect.copy()
         self.direcao.y += self.gravidade_valor * dt
@@ -378,7 +480,8 @@ class Monstro(Sprite):
 
     def _collide_with_water(self):
         """Retorna True se o rect do monstro colidir com qualquer water_rect.
-           Aceita self.water_sprites sendo None, Group, list de sprites, ou list de rects.
+
+        Aceita self.water_sprites sendo None, Group, list de sprites, ou list de rects.
         """
         if not self.water_sprites:
             return False
@@ -397,7 +500,8 @@ class Monstro(Sprite):
 
     def _probe_agua_a_frente(self, px_a_frente=4, probe_height=4):
         """Retorna True se ao andar px_a_frente na direção X atual o pé do monstro cairia em água.
-           Usa uma pequena caixa (probe) na borda inferior na direção do movimento.
+
+        Usa uma pequena caixa (probe) na borda inferior na direção do movimento.
         """
         if not self.water_sprites:
             return False
@@ -434,6 +538,7 @@ class Monstro(Sprite):
         return False
 
     def collision(self, direcao):
+        """Trata colisões do monstro com o ambiente nas direções horizontal/vertical."""
         for sprite in self.collision_sprites:
             if sprite.rect.colliderect(self.rect):
                 if direcao == 'horizontal':
@@ -466,6 +571,7 @@ class Monstro(Sprite):
                             self.direcao.y = 0
 
     def ia_patrulha(self, dt):
+        """Lógica simples de patrulha entre limites_patrulha."""
         if self.direcao.x > 0 and self.rect.right >= self.limites_patrulha[1]:
             self.direcao.x = -1
         elif self.direcao.x < 0 and self.rect.left <= self.limites_patrulha[0]:
@@ -473,6 +579,7 @@ class Monstro(Sprite):
         self.direcao_atual = 'right' if self.direcao.x > 0 else 'left'
 
     def ia_perseguicao(self, dt):
+        """Ajusta direção para perseguir a posição X do jogador."""
         jogador_x = self.jogador_ref.rect.centerx
         if self.rect.centerx < jogador_x:
             self.direcao.x = 1
@@ -484,6 +591,7 @@ class Monstro(Sprite):
             self.direcao.x = 0
 
     def verifica_modo_ia(self):
+        """Escolhe modo de IA (patrulha ou perseguição) baseado na distância ao jogador."""
         distancia = abs(self.rect.centerx - self.jogador_ref.rect.centerx)
         if distancia <= self.raio_de_visao:
             self.modo_ia = 'perseguicao'
@@ -493,6 +601,11 @@ class Monstro(Sprite):
             self.velocidade = self.velocidade_patrulha
 
     def update(self, dt):
+        """Atualiza o comportamento e animação do monstro.
+
+        Args:
+            dt (float): Delta time em segundos.
+        """
         self.verifica_modo_ia()
 
         if self.modo_ia == 'patrulha':
