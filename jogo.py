@@ -262,6 +262,7 @@ class Jogo:
 
                 # se for para VITORIA, salva o ranking ANTES de mudar de tela
                 if proximo_estado == 'VITORIA' and tempo_final_ms is not None:
+                    self.telas['RANKING'].add_result(self.nome_jogador, tempo_final_ms)
                     self.telas['VITORIA'].set_tempo_final(tempo_final_ms, self.nome_jogador)
 
                 # se for para JOGO (inicio de um novo jogo ou vindo do menu), reinicia o nível e a gravidade.

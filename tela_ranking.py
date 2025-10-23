@@ -1,41 +1,25 @@
 """
 Tela de ranking (Speedrun) do jogo SWITCH BACK.
 
-Carrega e exibe o Top 10 de tempos (arquivo JSON), permite adicionar um
-novo resultado via `add_result` e fornece um pequeno menu de ações
-(REINICIAR, MENU PRINCIPAL, SAIR). Suporta um fundo opcional em
-'assets/new.png' quando presente.
+Agora utiliza o módulo 'ranking_manager' para toda a manipulação do arquivo JSON,
+resolvendo o conflito de lógica e garantindo um ranking persistente.
 """
 
 import pygame
-import json
 import os
-from constantes import *
-
-RANKING_FILE = 'ranking.json'  # agora o arquivo de ranking vive aqui
-
+# Importação da correção: Usar o módulo que realmente gerencia o ranking
+import ranking_manager 
+from constantes import * 
 
 class TelaRanking:
-    """Tela que exibe o ranking de speedrun e oferece ações ao jogador.
-
-    A tela:
-      - Carrega resultados de `RANKING_FILE`;
-      - Permite adicionar um novo resultado com `add_result()`;
-      - Desenha o ranking com distinção de cores para o TOP 3;
-      - Exibe um fundo opcional se `assets/new.png` existir;
-      - Possui um pequeno menu de ações na parte inferior.
-    """
+    """Tela que exibe o ranking de speedrun e oferece ações ao jogador."""
 
     def __init__(self, window, assets):
-        """Inicializa a tela de ranking.
-
-        Args:
-            window (pygame.Surface): Superfície onde a tela será desenhada.
-            assets (dict): Dicionário de recursos (imagens, fontes, sons, animações).
-        """
+        """Inicializa a tela de ranking."""
         self.window = window
         self.assets = assets
-        self.ranking_data = self._carregar_ranking()
+        # CORREÇÃO: Carrega os dados usando a função segura do manager
+        self.ranking_data = ranking_manager.carregar_ranking()
         self.font = self.assets['fonte']
         self.pequena_font = self.assets['fonte2']
 
@@ -53,62 +37,26 @@ class TelaRanking:
         else:
             self.fundo = None
 
-    # ranking file handling 
-    def _carregar_ranking(self):
-        """Lê o arquivo de ranking e retorna uma lista de registros.
-
-        Retorna uma lista vazia se o arquivo não existir ou estiver inválido.
-
-        Returns:
-            list[dict]: Lista de registros com chaves 'nome' e 'tempo_ms'.
-        """
-        if not os.path.exists(RANKING_FILE):
-            return []
-        with open(RANKING_FILE, 'r') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return []
-
-    def _salvar_ranking(self, ranking):
-        """Salva a lista de ranking em formato JSON no arquivo padrão.
-
-        Args:
-            ranking (list[dict]): Lista de registros a ser salva.
-        """
-        with open(RANKING_FILE, 'w') as f:
-            json.dump(ranking, f, indent=4)
+    # REMOVIDO: _carregar_ranking e _salvar_ranking (Lógica duplicada e falha)
 
     def add_result(self, nome, tempo_ms):
         """Adicionar um novo resultado ao ranking, ordenar e salvar (máx 10).
-
-        Args:
-            nome (str): Nome do jogador.
-            tempo_ms (int): Tempo em milissegundos.
+        
+        CORREÇÃO: Chama a função única de salvamento do ranking_manager.
         """
         if nome is None:
             nome = "Player"
-        novo_resultado = {'nome': nome, 'tempo_ms': tempo_ms}
-
-        ranking = self._carregar_ranking()
-        ranking.append(novo_resultado)
-        ranking.sort(key=lambda x: x['tempo_ms'])
-        ranking = ranking[:10]
-        self._salvar_ranking(ranking)
+        
+        # A função do manager faz o carregamento, adição, ordenação e salvamento.
+        # Ela retorna a lista atualizada.
+        novo_ranking = ranking_manager.adicionar_tempo(nome, tempo_ms)
 
         # Atualiza cache local para desenho imediato
-        self.ranking_data = ranking
+        self.ranking_data = novo_ranking
 
     # formatação 
     def _formatar_tempo(self, tempo_ms):
-        """Formata tempo em milissegundos para MM:SS.mmm.
-
-        Args:
-            tempo_ms (int): Tempo em milissegundos.
-
-        Returns:
-            str: Tempo formatado como 'MM:SS.mmm'.
-        """
+        """Formata tempo em milissegundos para MM:SS.mmm."""
         total_segundos = tempo_ms // 1000
         ms = tempo_ms % 1000
         minutos = total_segundos // 60
@@ -117,18 +65,8 @@ class TelaRanking:
 
     # input / navegação
     def handle_event(self, event):
-        """Processa eventos de teclado para navegação no menu.
-
-        Teclas:
-          - UP/DOWN: navega entre as opções;
-          - ENTER: confirma a opção selecionada.
-
-        Retorna comandos que o loop principal (Jogo) deve interpretar:
-          - 'RESTART' -> reiniciar jogo,
-          - 'INICIO'   -> voltar ao menu principal,
-          - 'SAIR'     -> encerrar o jogo,
-          - None       -> sem ação.
-        """
+        """Processa eventos de teclado para navegação no menu."""
+        # ... (código inalterado) ...
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 self.indice_selecionado = (self.indice_selecionado - 1) % len(self.opcoes)
@@ -147,14 +85,14 @@ class TelaRanking:
     def update(self, dt):
         """Atualiza o estado da tela.
 
-        Recarrega o ranking do arquivo para manter sincronizado com alterações
-        externas e retorna o identificador da tela.
+        CORREÇÃO: Recarrega o ranking do arquivo usando a função segura do manager.
         """
-        self.ranking_data = self._carregar_ranking()
+        self.ranking_data = ranking_manager.carregar_ranking()
         return 'RANKING'
 
     def draw(self):
         """Desenha a tela de ranking na janela, incluindo fundo, título, lista e menu."""
+        # ... (código inalterado) ...
         # fundo (imagem opcional)
         if self.fundo:
             self.window.blit(self.fundo, (0, 0))
