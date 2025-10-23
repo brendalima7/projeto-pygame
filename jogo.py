@@ -62,7 +62,7 @@ def condicoes_iniciais():
     caminho_passos = os.path.join('assets', 'sound', 'passo.mp3')
     if os.path.exists(caminho_passos):
         assets['footstep_sound'] = pygame.mixer.Sound(caminho_passos)
-        assets['footstep_sound'].set_volume(0.3)  # volume mais baixo para passos
+        assets['footstep_sound'].set_volume(0.3)
     else:
         assets['footstep_sound'] = None
 
@@ -111,8 +111,10 @@ class Jogo:
 
         # define a tela inicial
         self.tela_atual = 'INICIO'
-        # carrega caminho de musicas de gameover (opcional)
+        # caminhos de músicas específicas
         self.gameover_music_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'gameovertheme.mp3')
+        self.vitoria_music_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'sound', 'vitoria_sound.mp3')
+        self.current_music_path = None
         
     # loop principal
     def run(self):
@@ -212,18 +214,34 @@ class Jogo:
         pygame.quit() 
 
     def _handle_screen_music(self, screen_name):
-        # troca a música quando for para GAMEOVER (toca gameover) ou restaura o tema
+       
+        # GAMEOVER
         if screen_name == 'GAMEOVER' and os.path.exists(self.gameover_music_path):
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load(self.gameover_music_path)
-            pygame.mixer.music.play(-1)
+            if self.current_music_path != self.gameover_music_path:
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load(self.gameover_music_path)
+                pygame.mixer.music.play(-1)
+                self.current_music_path = self.gameover_music_path
             return
 
-        if self.theme_music_path:
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load(self.theme_music_path)
-            pygame.mixer.music.play(-1)
-            
+        # VITORIA
+        if screen_name == 'VITORIA' and os.path.exists(self.vitoria_music_path):
+            if self.current_music_path != self.vitoria_music_path:
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load(self.vitoria_music_path)
+                pygame.mixer.music.play(-1)
+                self.current_music_path = self.vitoria_music_path
+            return
+
+        # TEMA PADRAO
+        if self.theme_music_path and os.path.exists(self.theme_music_path):
+            if self.current_music_path != self.theme_music_path:
+                pygame.mixer.music.stop()
+                pygame.mixer.music.load(self.theme_music_path)
+                pygame.mixer.music.play(-1)
+                self.current_music_path = self.theme_music_path
+
+
 if __name__ == '__main__':
     game = Jogo()
     game.run()

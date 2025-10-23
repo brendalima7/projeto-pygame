@@ -1,6 +1,10 @@
 [
     {
         "nome": "MIQUEIAS",
+        "tempo_ms": 28906
+    },
+    {
+        "nome": "MIQUEIAS",
         "tempo_ms": 32257
     },
     {
@@ -14,5 +18,9 @@
     {
         "nome": "BRENDA",
         "tempo_ms": 54664
+    },
+    {
+        "nome": "IQI",
+        "tempo_ms": 55404
     }
 ]
